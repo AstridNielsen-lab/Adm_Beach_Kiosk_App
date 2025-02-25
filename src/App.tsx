@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { ProductCard } from './components/ProductCard';
 import { Cart } from './components/Cart';
 import { AdminPanel } from './components/AdminPanel';
+import { AdminAuth } from './components/AdminAuth';
 import { Footer } from './components/Footer';
 import { products } from './data/products';
 import type { CartItem, Order, Product } from './types';
@@ -11,6 +12,7 @@ function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
 
   const addToCart = (product: Product) => {
@@ -67,12 +69,21 @@ function App() {
     );
   };
 
+  const handleAdminClick = () => {
+    setShowAdminAuth(true);
+  };
+
+  const handleAdminAuthSuccess = () => {
+    setShowAdminAuth(false);
+    setShowAdmin(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setShowCart(true)}
-        onAdminClick={() => setShowAdmin(true)}
+        onAdminClick={handleAdminClick}
       />
 
       <main className="container mx-auto p-6 flex-1">
@@ -117,6 +128,13 @@ function App() {
           onClose={() => setShowCart(false)}
           onUpdateQuantity={updateCartItemQuantity}
           onCheckout={handleCheckout}
+        />
+      )}
+
+      {showAdminAuth && (
+        <AdminAuth
+          onSuccess={handleAdminAuthSuccess}
+          onClose={() => setShowAdminAuth(false)}
         />
       )}
 
