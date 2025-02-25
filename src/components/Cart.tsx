@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, Send, CreditCard, Printer } from 'lucide-react';
 import { CartItem } from '../types';
 
 interface CartProps {
@@ -14,6 +14,10 @@ export function Cart({ items, onClose, onUpdateQuantity, onCheckout }: CartProps
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+
+  const handlePayment = () => {
+    window.open('https://link.mercadopago.com.br/likelooksolutions', '_blank');
+  };
 
   if (items.length === 0) {
     return (
@@ -86,12 +90,22 @@ export function Cart({ items, onClose, onUpdateQuantity, onCheckout }: CartProps
           <span className="text-lg font-semibold">Total:</span>
           <span className="text-xl font-bold">R$ {total.toFixed(2)}</span>
         </div>
-        <button
-          onClick={onCheckout}
-          className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Checkout
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={onCheckout}
+            className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <Send size={20} />
+            Enviar Pedido
+          </button>
+          <button
+            onClick={handlePayment}
+            className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <CreditCard size={20} />
+            Pagar com Mercado Pago
+          </button>
+        </div>
       </div>
     </div>
   );

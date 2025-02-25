@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Coffee, UtensilsCrossed } from 'lucide-react';
+import { Clock, Coffee, UtensilsCrossed, Printer } from 'lucide-react';
 import { Order } from '../types';
 
 interface AdminPanelProps {
@@ -20,6 +20,35 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
       case 'delivered':
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const printOrder = (order: Order, type: 'kitchen' | 'bar') => {
+    const items = order.items.filter(item => 
+      type === 'kitchen' ? item.product.category === 'food' : item.product.category === 'drink'
+    );
+
+    if (items.length === 0) return;
+
+    const content = `
+      PEDIDO #${order.id}
+      ${new Date(order.timestamp).toLocaleString()}
+      Mesa: ${order.table}
+      Status: ${order.status.toUpperCase()}
+      
+      ITENS:
+      ${items.map(item => `${item.quantity}x ${item.product.name} - R$ ${(item.product.price * item.quantity).toFixed(2)}`).join('\n')}
+      
+      Total dos itens: R$ ${items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toFixed(2)}
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow?.document.write(`
+      <pre style="font-family: monospace; padding: 20px;">
+        ${content}
+      </pre>
+    `);
+    printWindow?.document.close();
+    printWindow?.print();
   };
 
   return (
@@ -49,6 +78,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
                   order={order}
                   getStatusColor={getStatusColor}
                   onUpdateStatus={onUpdateStatus}
+                  onPrint={() => printOrder(order, 'kitchen')}
                 />
               ))}
           </div>
@@ -66,6 +96,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
                   order={order}
                   getStatusColor={getStatusColor}
                   onUpdateStatus={onUpdateStatus}
+                  onPrint={() => printOrder(order, 'bar')}
                 />
               ))}
           </div>
@@ -79,10 +110,12 @@ function OrderCard({
   order,
   getStatusColor,
   onUpdateStatus,
+  onPrint,
 }: {
   order: Order;
   getStatusColor: (status: Order['status']) => string;
   onUpdateStatus: (orderId: string, status: Order['status']) => void;
+  onPrint: () => void;
 }) {
   const nextStatus: Record<Order['status'], Order['status']> = {
     pending: 'preparing',
@@ -124,14 +157,23 @@ function OrderCard({
           <span className="text-sm text-gray-600">Total:</span>
           <span className="ml-2 font-semibold">R$ {order.total.toFixed(2)}</span>
         </div>
-        {order.status !== 'delivered' && (
+        <div className="flex gap-2">
           <button
-            onClick={() => onUpdateStatus(order.id, nextStatus[order.status])}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            onClick={onPrint}
+            className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1"
           >
-            Update Status
+            <Printer size={18} />
+            Imprimir
           </button>
-        )}
+          {order.status !== 'delivered' && (
+            <button
+              onClick={() => onUpdateStatus(order.id, nextStatus[order.status])}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Update Status
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
