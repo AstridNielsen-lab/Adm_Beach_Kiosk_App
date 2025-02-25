@@ -7,65 +7,27 @@ interface AdminPanelProps {
   orders: Order[];
   onUpdateStatus: (orderId: string, status: Order['status']) => void;
   onClose: () => void;
+  currentUser: { role: string; name: string } | null;
+  tables: Table[];
+  onUpdateTable: (tableNumber: number, updates: Partial<Table>) => void;
+  onCloseTable: (table: Table) => void;
+  onOpenNewTable: (tableNumber: number, waiter: string) => void;
 }
 
 const BAR_CATEGORIES = ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'];
 const KITCHEN_CATEGORIES = ['pratos_principais', 'porcoes', 'saladas', 'molhos'];
 
-const INITIAL_TABLES: Table[] = Array.from({ length: 100 }, (_, i) => ({
-  number: i + 1,
-  waiter: '',
-  status: 'available',
-  lastInteraction: new Date(),
-  orders: [],
-  total: 0,
-}));
-
-export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps) {
-  const [activeView, setActiveView] = useState<'orders' | 'tables'>('orders');
-  const [tables, setTables] = useState<Table[]>(INITIAL_TABLES);
-
-  useEffect(() => {
-    // Update tables based on orders
-    const updatedTables = [...tables];
-    orders.forEach(order => {
-      const tableIndex = updatedTables.findIndex(t => t.number === order.table);
-      if (tableIndex !== -1) {
-        const table = updatedTables[tableIndex];
-        if (!table.orders.find(o => o.id === order.id)) {
-          table.orders.push(order);
-          table.total = table.orders.reduce((sum, o) => sum + o.total, 0);
-          table.status = 'occupied';
-          table.lastInteraction = new Date();
-          table.waiter = order.waiter || table.waiter;
-        }
-      }
-    });
-    setTables(updatedTables);
-  }, [orders]);
-
-  const handleUpdateTable = (tableNumber: number, updates: Partial<Table>) => {
-    setTables(tables.map(table =>
-      table.number === tableNumber ? { ...table, ...updates } : table
-    ));
-  };
-
-  const handleCloseTable = (table: Table) => {
-    // Open Mercado Pago link with the total amount
-    window.open('https://link.mercadopago.com.br/likelooksolutions', '_blank');
-    
-    // Reset table
-    setTables(tables.map(t =>
-      t.number === table.number ? {
-        ...t,
-        status: 'available',
-        orders: [],
-        total: 0,
-        waiter: '',
-        lastInteraction: new Date()
-      } : t
-    ));
-  };
+export function AdminPanel({
+  orders,
+  onUpdateStatus,
+  onClose,
+  currentUser,
+  tables,
+  onUpdateTable,
+  onCloseTable,
+  onOpenNewTable
+}: AdminPanelProps) {
+  const [activeView, setActiveView] = useState<'orders' | 'tables'>('tables');
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -118,8 +80,9 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
         {activeView === 'tables' ? (
           <TableGrid
             tables={tables}
-            onUpdateTable={handleUpdateTable}
-            onCloseTable={handleCloseTable}
+            onUpdateTable={onUpdateTable}
+            onCloseTable={onCloseTable}
+            onOpenNewTable={onOpenNewTable}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
