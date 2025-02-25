@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, DollarSign, Plus, UtensilsCrossed, History, CreditCard } from 'lucide-react';
+import { Clock, DollarSign, Plus, UtensilsCrossed, History, CreditCard, Printer } from 'lucide-react';
 import type { Table, Order, ClosedTable, PaymentMethod } from '../types';
 
 interface TableGridProps {
@@ -282,6 +282,105 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     }
   };
 
+  const handlePrintBill = (table: Table) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Conta - Mesa ${table.number}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px;
+            line-height: 1.6;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+          }
+          .info { 
+            margin-bottom: 20px; 
+          }
+          .items { 
+            margin-bottom: 20px;
+            width: 100%;
+          }
+          .items th {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ccc;
+          }
+          .items td {
+            padding: 8px;
+          }
+          .total { 
+            text-align: right;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+          }
+          @media print {
+            .no-print { 
+              display: none; 
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Beach Kiosk</h1>
+          <p>Conta da Mesa ${table.number}</p>
+        </div>
+        
+        <div class="info">
+          <p><strong>Data:</strong> ${new Date().toLocaleDateString()}</p>
+          <p><strong>Hora:</strong> ${new Date().toLocaleTimeString()}</p>
+          <p><strong>Garçom:</strong> ${table.waiter}</p>
+        </div>
+
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qtd</th>
+              <th>Valor Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${table.orders.flatMap(order => 
+              order.items.map(item => `
+                <tr>
+                  <td>${item.product.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>R$ ${item.product.price.toFixed(2)}</td>
+                  <td>R$ ${(item.product.price * item.quantity).toFixed(2)}</td>
+                </tr>
+              `).join('')
+            )}
+          </tbody>
+        </table>
+
+        <div class="total">
+          Total: R$ ${table.total.toFixed(2)}
+        </div>
+
+        <button class="no-print" onclick="window.print()">Imprimir</button>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -471,6 +570,14 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
                   >
                     <Plus size={16} />
                     Adicionar Itens
+                  </button>
+
+                  <button
+                    onClick={() => handlePrintBill(table)}
+                    className="w-full bg-purple-500 text-white py-2 rounded hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Printer size={16} />
+                    Imprimir Conta
                   </button>
 
                   <button
