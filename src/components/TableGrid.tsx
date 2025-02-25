@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, DollarSign, Plus, UtensilsCrossed, History, CreditCard } from 'lucide-react';
-import type { Table, Order, ClosedTable } from '../types';
+import type { Table, Order, ClosedTable, PaymentMethod } from '../types';
 
 interface TableGridProps {
   tables: Table[];
@@ -12,11 +12,11 @@ interface TableGridProps {
 interface PaymentModalProps {
   table: Table;
   onClose: () => void;
-  onConfirm: (table: Table, paymentMethod: string) => void;
+  onConfirm: (table: Table, paymentMethod: PaymentMethod) => void;
 }
 
 function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   const handlePayment = () => {
     if (paymentMethod === 'mercadopago') {
@@ -45,7 +45,7 @@ function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
               name="payment"
               value="cash"
               checked={paymentMethod === 'cash'}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
               className="w-4 h-4 text-blue-600"
             />
             <span>Dinheiro</span>
@@ -57,7 +57,7 @@ function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
               name="payment"
               value="card"
               checked={paymentMethod === 'card'}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
               className="w-4 h-4 text-blue-600"
             />
             <span>Cartão de Crédito/Débito</span>
@@ -69,7 +69,7 @@ function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
               name="payment"
               value="pix"
               checked={paymentMethod === 'pix'}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
               className="w-4 h-4 text-blue-600"
             />
             <span>PIX</span>
@@ -81,7 +81,7 @@ function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
               name="payment"
               value="mercadopago"
               checked={paymentMethod === 'mercadopago'}
-              onChange={(e) => setPaymentMethod(e.target.value)}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
               className="w-4 h-4 text-blue-600"
             />
             <span>Mercado Pago</span>
@@ -241,7 +241,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     setShowPaymentModal(table);
   };
 
-  const handlePaymentConfirm = (table: Table, paymentMethod: string) => {
+  const handlePaymentConfirm = (table: Table, paymentMethod: PaymentMethod) => {
     const duration = Math.floor(
       (Date.now() - new Date(table.lastInteraction).getTime()) / (1000 * 60)
     );
@@ -249,7 +249,8 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     const closedTable: ClosedTable = {
       ...table,
       closedAt: new Date(),
-      duration
+      duration,
+      paymentMethod
     };
 
     setClosedTables(prev => {
@@ -266,6 +267,19 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}min`;
+  };
+
+  const getPaymentMethodLabel = (method: PaymentMethod) => {
+    switch (method) {
+      case 'cash':
+        return 'Dinheiro';
+      case 'card':
+        return 'Cartão';
+      case 'pix':
+        return 'PIX';
+      case 'mercadopago':
+        return 'Mercado Pago';
+    }
   };
 
   return (
@@ -315,6 +329,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
                     <th className="py-3 px-4">Pedidos</th>
                     <th className="py-3 px-4">Total</th>
                     <th className="py-3 px-4">Duração</th>
+                    <th className="py-3 px-4">Pagamento</th>
                     <th className="py-3 px-4">Fechado em</th>
                   </tr>
                 </thead>
@@ -326,6 +341,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
                       <td className="py-3 px-4">{table.orders.length}</td>
                       <td className="py-3 px-4">R$ {table.total.toFixed(2)}</td>
                       <td className="py-3 px-4">{formatDuration(table.duration)}</td>
+                      <td className="py-3 px-4">{getPaymentMethodLabel(table.paymentMethod)}</td>
                       <td className="py-3 px-4">
                         {new Date(table.closedAt).toLocaleString()}
                       </td>
