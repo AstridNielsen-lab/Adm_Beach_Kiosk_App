@@ -21,9 +21,12 @@ export interface Table {
   total: number;
 }
 
+export type PaymentMethod = 'cash' | 'card' | 'pix' | 'mercadopago';
+
 export interface ClosedTable extends Omit<Table, 'status'> {
   closedAt: Date;
   duration: number; // in minutes
+  paymentMethod: PaymentMethod;
 }
 
 export interface Order {
