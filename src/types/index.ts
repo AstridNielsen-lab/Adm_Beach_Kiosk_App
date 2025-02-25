@@ -30,3 +30,11 @@ export interface Order {
   table: number;
   waiter: string;
 }
+
+export type UserRole = 'admin' | 'waiter' | 'cashier';
+
+export interface User {
+  role: UserRole;
+  name: string;
+  timestamp: Date;
+}

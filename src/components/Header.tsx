@@ -1,14 +1,17 @@
-import { ShoppingCart, UmbrellaIcon } from 'lucide-react';
+import { ShoppingCart, UmbrellaIcon, LogOut } from 'lucide-react';
 import React from 'react';
 import { AnimatedText } from './AnimatedText';
+import type { User } from '../types';
 
 interface HeaderProps {
   cartItemCount: number;
   onCartClick: () => void;
   onAdminClick: () => void;
+  currentUser: User | null;
+  onLogout: () => void;
 }
 
-export function Header({ cartItemCount, onCartClick, onAdminClick }: HeaderProps) {
+export function Header({ cartItemCount, onCartClick, onAdminClick, currentUser, onLogout }: HeaderProps) {
   return (
     <header className="bg-blue-500 text-white p-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
@@ -20,11 +23,25 @@ export function Header({ cartItemCount, onCartClick, onAdminClick }: HeaderProps
           />
         </div>
         <div className="flex items-center gap-4">
+          {currentUser && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg">
+              <span className="text-sm">
+                {currentUser.name} ({currentUser.role})
+              </span>
+              <button
+                onClick={onLogout}
+                className="p-1 hover:bg-blue-700 rounded-full transition-colors"
+                title="Sair"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          )}
           <button
             onClick={onAdminClick}
             className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
-            Admin Panel
+            {currentUser ? 'Painel de Controle' : 'Acessar Sistema'}
           </button>
           <button
             onClick={onCartClick}

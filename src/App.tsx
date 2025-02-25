@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ProductCard } from './components/ProductCard';
 import { Cart } from './components/Cart';
@@ -7,7 +7,7 @@ import { AdminAuth } from './components/AdminAuth';
 import { Footer } from './components/Footer';
 import { SplashScreen } from './components/SplashScreen';
 import { products } from './data/products';
-import type { CartItem, Order, Product } from './types';
+import type { CartItem, Order, Product, User } from './types';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -18,6 +18,23 @@ function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentTable, setCurrentTable] = useState<number>(0);
   const [currentWaiter, setCurrentWaiter] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Check for existing user session
+    const savedUser = localStorage.getItem('beachKioskUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      // Check if the session is less than 8 hours old
+      const sessionAge = Date.now() - new Date(user.timestamp).getTime();
+      if (sessionAge < 8 * 60 * 60 * 1000) { // 8 hours in milliseconds
+        setCurrentUser(user);
+        setShowAdmin(true);
+      } else {
+        localStorage.removeItem('beachKioskUser');
+      }
+    }
+  }, []);
 
   const addToCart = (product: Product) => {
     if (currentTable === 0) {
@@ -94,12 +111,23 @@ function App() {
   };
 
   const handleAdminClick = () => {
-    setShowAdminAuth(true);
+    if (currentUser) {
+      setShowAdmin(true);
+    } else {
+      setShowAdminAuth(true);
+    }
   };
 
-  const handleAdminAuthSuccess = () => {
+  const handleAdminAuthSuccess = (user: User) => {
+    setCurrentUser(user);
     setShowAdminAuth(false);
     setShowAdmin(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('beachKioskUser');
+    setCurrentUser(null);
+    setShowAdmin(false);
   };
 
   if (showSplash) {
@@ -123,6 +151,8 @@ function App() {
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setShowCart(true)}
         onAdminClick={handleAdminClick}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       <main className="container mx-auto p-6 flex-1">
@@ -181,6 +211,7 @@ function App() {
           orders={orders}
           onUpdateStatus={updateOrderStatus}
           onClose={() => setShowAdmin(false)}
+          currentUser={currentUser}
         />
       )}
     </div>
