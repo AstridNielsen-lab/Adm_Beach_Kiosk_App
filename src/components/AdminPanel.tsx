@@ -161,6 +161,59 @@ function OrderCard({
     0
   );
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const orderDate = new Date(order.timestamp).toLocaleString();
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Pedido #${order.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .order-info { margin-bottom: 20px; }
+          .items { margin-bottom: 20px; }
+          .item { margin-bottom: 10px; }
+          .total { font-weight: bold; margin-top: 20px; }
+          @media print {
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Beach Kiosk</h1>
+          <p>Pedido #${order.id}</p>
+        </div>
+        <div class="order-info">
+          <p>Data: ${orderDate}</p>
+          <p>Mesa: ${order.table}</p>
+          <p>Garçom: ${order.waiter}</p>
+          <p>Status: ${order.status}</p>
+        </div>
+        <div class="items">
+          <h2>Itens:</h2>
+          ${filteredItems.map(item => `
+            <div class="item">
+              ${item.quantity}x ${item.product.name} - R$ ${(item.product.price * item.quantity).toFixed(2)}
+            </div>
+          `).join('')}
+        </div>
+        <div class="total">
+          Total: R$ ${total.toFixed(2)}
+        </div>
+        <button class="no-print" onclick="window.print()">Imprimir</button>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
       <div className="flex justify-between items-start mb-4">
@@ -196,6 +249,13 @@ function OrderCard({
           <span className="ml-2 font-semibold">R$ {total.toFixed(2)}</span>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+          >
+            <Printer size={18} />
+            Imprimir
+          </button>
           <button
             onClick={() => onUpdateStatus(order.id, nextStatus[order.status])}
             className={`px-4 py-2 rounded-lg transition-colors ${
