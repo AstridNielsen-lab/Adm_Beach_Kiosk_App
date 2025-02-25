@@ -6,7 +6,7 @@ export const products = [
     description: 'Tradicional coquetel brasileiro com limão e cachaça Velho Barreiro',
     price: 25.00,
     category: 'destilados',
-    image: 'https://images.unsplash.com/photo-1575037614876-c38a4d44f5b8?auto=format&fit=crop&q=80&w=500',
+    image: 'https://raw.githubusercontent.com/AstridNielsen-lab/Beach-Kiosk/refs/heads/index/src/capirinha%20sol.jpg?auto=format&fit=crop&q=80&w=500',
   },
   {
     id: 'drink-2',
@@ -32,7 +32,7 @@ export const products = [
     description: 'Cerveja premium 330ml, servida gelada',
     price: 14.00,
     category: 'cervejas',
-    image: 'https://images.unsplash.com/photo-1618885472179-5e474019f2a9?auto=format&fit=crop&q=80&w=500',
+    image: 'https://raw.githubusercontent.com/AstridNielsen-lab/Beach-Kiosk/refs/heads/index/src/heineken-1.jpg?auto=format&fit=crop&q=80&w=500',
   },
   {
     id: 'beer-2',
