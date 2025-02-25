@@ -29,6 +29,7 @@ function App() {
       }
       return [...items, { product, quantity: 1 }];
     });
+    setShowCart(true); // Abre o carrinho automaticamente ao adicionar um item
   };
 
   const updateCartItemQuantity = (productId: string, change: number) => {
@@ -96,7 +97,7 @@ function App() {
   } as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-green-50 to-yellow-50 flex flex-col">
       <Header
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setShowCart(true)}
@@ -104,11 +105,15 @@ function App() {
       />
 
       <main className="container mx-auto p-6 flex-1">
-        <h1 className="text-3xl font-bold mb-8">Cardápio</h1>
+        <h1 className="text-4xl font-bold mb-8 text-green-800 text-center">
+          Cardápio
+        </h1>
         
         {Object.entries(categories).map(([category, title]) => (
-          <div key={category} className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">{title}</h2>
+          <div key={category} className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-green-800 flex items-center gap-2 before:content-[''] before:h-1 before:flex-1 before:bg-gradient-to-r before:from-yellow-400 before:to-green-400 after:content-[''] after:h-1 after:flex-1 after:bg-gradient-to-r after:from-green-400 after:to-yellow-400">
+              <span className="px-4">{title}</span>
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {products
                 .filter((product) => product.category === category)
