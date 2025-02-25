@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, UtensilsCrossed, Printer, Grid } from 'lucide-react';
+import { Coffee, UtensilsCrossed, Printer, Grid, History as HistoryIcon } from 'lucide-react';
 import { Order, Table } from '../types';
 import { TableGrid } from './TableGrid';
+import { OrderHistory } from './OrderHistory';
 
 interface AdminPanelProps {
   orders: Order[];
@@ -14,9 +15,6 @@ interface AdminPanelProps {
   onOpenNewTable: (tableNumber: number, waiter: string) => void;
 }
 
-const BAR_CATEGORIES = ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'];
-const KITCHEN_CATEGORIES = ['pratos_principais', 'porcoes', 'saladas', 'molhos'];
-
 export function AdminPanel({
   orders,
   onUpdateStatus,
@@ -27,7 +25,7 @@ export function AdminPanel({
   onCloseTable,
   onOpenNewTable
 }: AdminPanelProps) {
-  const [activeView, setActiveView] = useState<'orders' | 'tables'>('tables');
+  const [activeView, setActiveView] = useState<'orders' | 'tables' | 'history'>('tables');
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -69,6 +67,17 @@ export function AdminPanel({
               Mesas
             </button>
             <button
+              onClick={() => setActiveView('history')}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                activeView === 'history'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              <HistoryIcon size={18} />
+              Histórico
+            </button>
+            <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
@@ -77,14 +86,23 @@ export function AdminPanel({
           </div>
         </div>
 
-        {activeView === 'tables' ? (
+        {activeView === 'tables' && (
           <TableGrid
             tables={tables}
             onUpdateTable={onUpdateTable}
             onCloseTable={onCloseTable}
             onOpenNewTable={onOpenNewTable}
           />
-        ) : (
+        )}
+        
+        {activeView === 'history' && (
+          <OrderHistory
+            orders={orders}
+            onClose={() => setActiveView('tables')}
+          />
+        )}
+
+        {activeView === 'orders' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-orange-50 p-6 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
@@ -93,7 +111,7 @@ export function AdminPanel({
               </div>
               {orders
                 .filter(order => order.items.some(item => 
-                  KITCHEN_CATEGORIES.includes(item.product.category)
+                  ['pratos_principais', 'porcoes', 'saladas', 'molhos'].includes(item.product.category)
                 ))
                 .map(order => (
                   <OrderCard
@@ -101,7 +119,7 @@ export function AdminPanel({
                     order={order}
                     getStatusColor={getStatusColor}
                     onUpdateStatus={onUpdateStatus}
-                    categories={KITCHEN_CATEGORIES}
+                    categories={['pratos_principais', 'porcoes', 'saladas', 'molhos']}
                   />
                 ))}
             </div>
@@ -113,7 +131,7 @@ export function AdminPanel({
               </div>
               {orders
                 .filter(order => order.items.some(item => 
-                  BAR_CATEGORIES.includes(item.product.category)
+                  ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'].includes(item.product.category)
                 ))
                 .map(order => (
                   <OrderCard
@@ -121,7 +139,7 @@ export function AdminPanel({
                     order={order}
                     getStatusColor={getStatusColor}
                     onUpdateStatus={onUpdateStatus}
-                    categories={BAR_CATEGORIES}
+                    categories={['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas']}
                   />
                 ))}
             </div>
