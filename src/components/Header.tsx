@@ -1,4 +1,4 @@
-import { ShoppingCart, UmbrellaIcon, LogOut, Maximize2, Minimize2 } from 'lucide-react';
+import { ShoppingCart, UmbrellaIcon, LogOut, Maximize2, Minimize2, Coffee } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { AnimatedText } from './AnimatedText';
 import type { User } from '../types';
@@ -9,9 +9,10 @@ interface HeaderProps {
   onAdminClick: () => void;
   currentUser: User | null;
   onLogout: () => void;
+  onRestClick: () => void;
 }
 
-export function Header({ cartItemCount, onCartClick, onAdminClick, currentUser, onLogout }: HeaderProps) {
+export function Header({ cartItemCount, onCartClick, onAdminClick, currentUser, onLogout, onRestClick }: HeaderProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -42,6 +43,13 @@ export function Header({ cartItemCount, onCartClick, onAdminClick, currentUser, 
           />
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={onRestClick}
+            className="p-2 hover:bg-blue-600 rounded-full transition-colors"
+            title="Modo descanso"
+          >
+            <Coffee size={24} />
+          </button>
           <button
             onClick={toggleFullscreen}
             className="p-2 hover:bg-blue-600 rounded-full transition-colors"
