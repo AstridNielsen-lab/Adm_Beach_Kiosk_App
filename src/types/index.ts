@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  category: 'food' | 'drink';
+  category: 'destilados' | 'cervejas' | 'vinhos' | 'nao_alcoolicas' | 'pratos_principais' | 'porcoes' | 'saladas' | 'molhos';
   image: string;
 }
 

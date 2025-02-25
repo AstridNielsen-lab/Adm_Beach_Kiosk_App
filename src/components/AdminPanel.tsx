@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Coffee, UtensilsCrossed, Printer } from 'lucide-react';
+import { Coffee, UtensilsCrossed, Printer } from 'lucide-react';
 import { Order } from '../types';
 
 interface AdminPanelProps {
@@ -7,6 +7,9 @@ interface AdminPanelProps {
   onUpdateStatus: (orderId: string, status: Order['status']) => void;
   onClose: () => void;
 }
+
+const BAR_CATEGORIES = ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'];
+const KITCHEN_CATEGORIES = ['pratos_principais', 'porcoes', 'saladas', 'molhos'];
 
 export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps) {
   const getStatusColor = (status: Order['status']) => {
@@ -22,12 +25,34 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
     }
   };
 
-  const printOrder = (order: Order, type: 'kitchen' | 'bar') => {
-    const items = order.items.filter(item => 
-      type === 'kitchen' ? item.product.category === 'food' : item.product.category === 'drink'
-    );
+  // Filtra os itens do pedido por categoria (bar ou cozinha)
+  const filterOrderItems = (order: Order, isBar: boolean) => {
+    const categories = isBar ? BAR_CATEGORIES : KITCHEN_CATEGORIES;
+    return {
+      ...order,
+      items: order.items.filter(item => categories.includes(item.product.category))
+    };
+  };
 
-    if (items.length === 0) return;
+  // Calcula o total dos itens filtrados
+  const calculateFilteredTotal = (order: Order, isBar: boolean) => {
+    const categories = isBar ? BAR_CATEGORIES : KITCHEN_CATEGORIES;
+    return order.items
+      .filter(item => categories.includes(item.product.category))
+      .reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  };
+
+  // Verifica se o pedido tem itens para a seção específica
+  const hasItemsForSection = (order: Order, isBar: boolean) => {
+    const categories = isBar ? BAR_CATEGORIES : KITCHEN_CATEGORIES;
+    return order.items.some(item => categories.includes(item.product.category));
+  };
+
+  const printOrder = (order: Order, isBar: boolean) => {
+    const filteredOrder = filterOrderItems(order, isBar);
+    const sectionTotal = calculateFilteredTotal(order, isBar);
+    
+    if (filteredOrder.items.length === 0) return;
 
     const content = `
       PEDIDO #${order.id}
@@ -36,9 +61,11 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
       Status: ${order.status.toUpperCase()}
       
       ITENS:
-      ${items.map(item => `${item.quantity}x ${item.product.name} - R$ ${(item.product.price * item.quantity).toFixed(2)}`).join('\n')}
+      ${filteredOrder.items.map(item => 
+        `${item.quantity}x ${item.product.name} - R$ ${(item.product.price * item.quantity).toFixed(2)}`
+      ).join('\n')}
       
-      Total dos itens: R$ ${items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toFixed(2)}
+      Total dos itens: R$ ${sectionTotal.toFixed(2)}
     `;
 
     const printWindow = window.open('', '_blank');
@@ -55,12 +82,12 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Admin Panel</h1>
+          <h1 className="text-2xl font-bold">Painel Administrativo</h1>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
-            Back to Store
+            Voltar para a Loja
           </button>
         </div>
 
@@ -68,17 +95,18 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
           <div className="bg-orange-50 p-6 rounded-lg">
             <div className="flex items-center gap-2 mb-4">
               <UtensilsCrossed />
-              <h2 className="text-xl font-semibold">Kitchen Orders</h2>
+              <h2 className="text-xl font-semibold">Pedidos - Cozinha</h2>
             </div>
             {orders
-              .filter((order) => order.items.some((item) => item.product.category === 'food'))
-              .map((order) => (
+              .filter(order => hasItemsForSection(order, false))
+              .map(order => (
                 <OrderCard
                   key={order.id}
-                  order={order}
+                  order={filterOrderItems(order, false)}
                   getStatusColor={getStatusColor}
                   onUpdateStatus={onUpdateStatus}
-                  onPrint={() => printOrder(order, 'kitchen')}
+                  onPrint={() => printOrder(order, false)}
+                  total={calculateFilteredTotal(order, false)}
                 />
               ))}
           </div>
@@ -86,17 +114,18 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
           <div className="bg-blue-50 p-6 rounded-lg">
             <div className="flex items-center gap-2 mb-4">
               <Coffee />
-              <h2 className="text-xl font-semibold">Bar Orders</h2>
+              <h2 className="text-xl font-semibold">Pedidos - Bar</h2>
             </div>
             {orders
-              .filter((order) => order.items.some((item) => item.product.category === 'drink'))
-              .map((order) => (
+              .filter(order => hasItemsForSection(order, true))
+              .map(order => (
                 <OrderCard
                   key={order.id}
-                  order={order}
+                  order={filterOrderItems(order, true)}
                   getStatusColor={getStatusColor}
                   onUpdateStatus={onUpdateStatus}
-                  onPrint={() => printOrder(order, 'bar')}
+                  onPrint={() => printOrder(order, true)}
+                  total={calculateFilteredTotal(order, true)}
                 />
               ))}
           </div>
@@ -106,17 +135,21 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
   );
 }
 
+interface OrderCardProps {
+  order: Order;
+  getStatusColor: (status: Order['status']) => string;
+  onUpdateStatus: (orderId: string, status: Order['status']) => void;
+  onPrint: () => void;
+  total: number;
+}
+
 function OrderCard({
   order,
   getStatusColor,
   onUpdateStatus,
   onPrint,
-}: {
-  order: Order;
-  getStatusColor: (status: Order['status']) => string;
-  onUpdateStatus: (orderId: string, status: Order['status']) => void;
-  onPrint: () => void;
-}) {
+  total
+}: OrderCardProps) {
   const nextStatus: Record<Order['status'], Order['status']> = {
     pending: 'preparing',
     preparing: 'ready',
@@ -128,12 +161,11 @@ function OrderCard({
     <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <span className="font-semibold">Order #{order.id}</span>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-            <Clock size={16} />
-            <span>
-              {new Date(order.timestamp).toLocaleTimeString()}
-            </span>
+          <span className="font-semibold">Pedido #{order.id}</span>
+          <div className="text-sm text-gray-500 mt-1">
+            <span>Mesa: {order.table}</span>
+            <span className="mx-2">•</span>
+            <span>{new Date(order.timestamp).toLocaleTimeString()}</span>
           </div>
         </div>
         <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
@@ -155,7 +187,7 @@ function OrderCard({
       <div className="mt-4 pt-4 border-t flex justify-between items-center">
         <div>
           <span className="text-sm text-gray-600">Total:</span>
-          <span className="ml-2 font-semibold">R$ {order.total.toFixed(2)}</span>
+          <span className="ml-2 font-semibold">R$ {total.toFixed(2)}</span>
         </div>
         <div className="flex gap-2">
           <button
@@ -170,7 +202,7 @@ function OrderCard({
               onClick={() => onUpdateStatus(order.id, nextStatus[order.status])}
               className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
-              Update Status
+              Atualizar Status
             </button>
           )}
         </div>

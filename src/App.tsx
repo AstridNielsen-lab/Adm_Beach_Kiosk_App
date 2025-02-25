@@ -84,6 +84,17 @@ function App() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
+  const categories = {
+    destilados: 'Destilados',
+    cervejas: 'Cervejas',
+    vinhos: 'Vinhos',
+    nao_alcoolicas: 'Bebidas Não Alcoólicas',
+    pratos_principais: 'Pratos Principais',
+    porcoes: 'Porções',
+    saladas: 'Saladas',
+    molhos: 'Molhos Extras'
+  } as const;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header
@@ -93,37 +104,24 @@ function App() {
       />
 
       <main className="container mx-auto p-6 flex-1">
-        <h1 className="text-3xl font-bold mb-8">Menu</h1>
+        <h1 className="text-3xl font-bold mb-8">Cardápio</h1>
         
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Drinks</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products
-              .filter((product) => product.category === 'drink')
-              .map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))}
+        {Object.entries(categories).map(([category, title]) => (
+          <div key={category} className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{title}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products
+                .filter((product) => product.category === category)
+                .map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={addToCart}
+                  />
+                ))}
+            </div>
           </div>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Food</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products
-              .filter((product) => product.category === 'food')
-              .map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))}
-          </div>
-        </div>
+        ))}
       </main>
 
       <Footer />
