@@ -29,7 +29,6 @@ function App() {
       }
       return [...items, { product, quantity: 1 }];
     });
-    setShowCart(true); // Abre o carrinho automaticamente ao adicionar um item
   };
 
   const updateCartItemQuantity = (productId: string, change: number) => {
