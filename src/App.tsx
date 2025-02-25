@@ -7,33 +7,122 @@ import { AdminAuth } from './components/AdminAuth';
 import { Footer } from './components/Footer';
 import { SplashScreen } from './components/SplashScreen';
 import { products } from './data/products';
-import type { CartItem, Order, Product, User } from './types';
+import type { CartItem, Order, Product, User, Table } from './types';
+
+const BACKUP_INTERVAL = 3 * 60 * 1000; // 3 minutes in milliseconds
+const LOCAL_STORAGE_KEYS = {
+  TABLES: 'beachKiosk_tables',
+  ORDERS: 'beachKiosk_orders',
+  BACKUP_TIME: 'beachKiosk_lastBackup',
+  USER: 'beachKioskUser',
+};
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [isResting, setIsResting] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showAdminAuth, setShowAdminAuth] = useState(false);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const savedOrders = localStorage.getItem(LOCAL_STORAGE_KEYS.ORDERS);
+    return savedOrders ? JSON.parse(savedOrders) : [];
+  });
   const [currentTable, setCurrentTable] = useState<number>(0);
   const [currentWaiter, setCurrentWaiter] = useState<string>('');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      const sessionAge = Date.now() - new Date(user.timestamp).getTime();
+      return sessionAge < 8 * 60 * 60 * 1000 ? user : null;
+    }
+    return null;
+  });
+  const [tables, setTables] = useState<Table[]>(() => {
+    const savedTables = localStorage.getItem(LOCAL_STORAGE_KEYS.TABLES);
+    if (savedTables) {
+      return JSON.parse(savedTables, (key, value) => {
+        if (key === 'lastInteraction') return new Date(value);
+        if (key === 'timestamp') return new Date(value);
+        return value;
+      });
+    }
+    return Array.from({ length: 100 }, (_, i) => ({
+      number: i + 1,
+      waiter: '',
+      status: 'available',
+      lastInteraction: new Date(),
+      orders: [],
+      total: 0,
+      chat: []
+    }));
+  });
+
+  // Automatic backup system
+  useEffect(() => {
+    const backupData = () => {
+      if (!currentUser) return;
+
+      const now = new Date().toISOString();
+      localStorage.setItem(LOCAL_STORAGE_KEYS.TABLES, JSON.stringify(tables));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.BACKUP_TIME, now);
+      
+      console.log(`Backup automático realizado em ${new Date().toLocaleTimeString()}`);
+    };
+
+    const backupInterval = setInterval(backupData, BACKUP_INTERVAL);
+
+    // Backup on user actions that modify data
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        backupData();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      backupData();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(backupInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [tables, orders, currentUser]);
 
   useEffect(() => {
     // Check for existing user session
-    const savedUser = localStorage.getItem('beachKioskUser');
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
     if (savedUser) {
       const user = JSON.parse(savedUser);
       // Check if the session is less than 8 hours old
       const sessionAge = Date.now() - new Date(user.timestamp).getTime();
-      if (sessionAge < 8 * 60 * 60 * 1000) { // 8 hours in milliseconds
+      if (sessionAge < 8 * 60 * 60 * 1000) {
         setCurrentUser(user);
         setShowAdmin(true);
       } else {
-        localStorage.removeItem('beachKioskUser');
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
       }
     }
+
+    // Listen for table order events
+    const handleTableOrder = (event: CustomEvent<{ tableNumber: number; waiter: string }>) => {
+      setCurrentTable(event.detail.tableNumber);
+      setCurrentWaiter(event.detail.waiter);
+      setShowAdmin(false);
+      setCartItems([]);
+    };
+
+    window.addEventListener('openTableOrder', handleTableOrder as EventListener);
+
+    return () => {
+      window.removeEventListener('openTableOrder', handleTableOrder as EventListener);
+    };
   }, []);
 
   const addToCart = (product: Product) => {
@@ -48,6 +137,13 @@ function App() {
       
       setCurrentTable(Number(tableNumber));
       setCurrentWaiter(waiterName || '');
+
+      // Update table status
+      setTables(tables.map(table =>
+        table.number === Number(tableNumber)
+          ? { ...table, status: 'occupied', waiter: waiterName || '', lastInteraction: new Date() }
+          : table
+      ));
     }
 
     setCartItems((items) => {
@@ -61,7 +157,6 @@ function App() {
       }
       return [...items, { product, quantity: 1 }];
     });
-    setShowCart(true);
   };
 
   const updateCartItemQuantity = (productId: string, change: number) => {
@@ -98,6 +193,19 @@ function App() {
     };
 
     setOrders((prev) => [...prev, newOrder]);
+    
+    // Update table information
+    setTables(tables.map(table =>
+      table.number === currentTable
+        ? {
+            ...table,
+            orders: [...table.orders, newOrder],
+            total: table.total + total,
+            lastInteraction: new Date()
+          }
+        : table
+    ));
+
     setCartItems([]);
     setShowCart(false);
   };
@@ -125,13 +233,50 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('beachKioskUser');
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
     setCurrentUser(null);
     setShowAdmin(false);
   };
 
+  const handleOpenNewTable = (tableNumber: number, waiter: string) => {
+    setCurrentTable(tableNumber);
+    setCurrentWaiter(waiter);
+    setTables(tables.map(table =>
+      table.number === tableNumber
+        ? { ...table, status: 'occupied', waiter, lastInteraction: new Date() }
+        : table
+    ));
+    setShowAdmin(false);
+    setCartItems([]);
+  };
+
+  const handleCloseTable = (table: Table) => {
+    setTables(tables.map(t =>
+      t.number === table.number
+        ? {
+            ...t,
+            status: 'available',
+            orders: [],
+            total: 0,
+            waiter: '',
+            lastInteraction: new Date()
+          }
+        : t
+    ));
+
+    if (currentTable === table.number) {
+      setCurrentTable(0);
+      setCurrentWaiter('');
+      setCartItems([]);
+    }
+  };
+
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
+  if (isResting) {
+    return <SplashScreen onComplete={() => setIsResting(false)} isRest />;
   }
 
   const categories = {
@@ -153,6 +298,7 @@ function App() {
         onAdminClick={handleAdminClick}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onRestClick={() => setIsResting(true)}
       />
 
       <main className="container mx-auto p-6 flex-1">
@@ -212,6 +358,14 @@ function App() {
           onUpdateStatus={updateOrderStatus}
           onClose={() => setShowAdmin(false)}
           currentUser={currentUser}
+          tables={tables}
+          onUpdateTable={(tableNumber, updates) =>
+            setTables(tables.map(table =>
+              table.number === tableNumber ? { ...table, ...updates } : table
+            ))
+          }
+          onCloseTable={handleCloseTable}
+          onOpenNewTable={handleOpenNewTable}
         />
       )}
     </div>

@@ -12,6 +12,13 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface ChatMessage {
+  id: string;
+  content: string;
+  sender: 'ai' | 'user';
+  timestamp: Date;
+}
+
 export interface Table {
   number: number;
   waiter: string;
@@ -19,6 +26,15 @@ export interface Table {
   lastInteraction: Date;
   orders: Order[];
   total: number;
+  chat: ChatMessage[];
+}
+
+export type PaymentMethod = 'cash' | 'card' | 'pix' | 'mercadopago';
+
+export interface ClosedTable extends Omit<Table, 'status'> {
+  closedAt: Date;
+  duration: number; // in minutes
+  paymentMethod: PaymentMethod;
 }
 
 export interface Order {
@@ -37,4 +53,10 @@ export interface User {
   role: UserRole;
   name: string;
   timestamp: Date;
+}
+
+export interface Voice {
+  name: string;
+  lang: string;
+  gender: string;
 }

@@ -1,71 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, UtensilsCrossed, Printer, Grid } from 'lucide-react';
+import { Coffee, UtensilsCrossed, Printer, Grid, History as HistoryIcon } from 'lucide-react';
 import { Order, Table } from '../types';
 import { TableGrid } from './TableGrid';
+import { OrderHistory } from './OrderHistory';
 
 interface AdminPanelProps {
   orders: Order[];
   onUpdateStatus: (orderId: string, status: Order['status']) => void;
   onClose: () => void;
+  currentUser: { role: string; name: string } | null;
+  tables: Table[];
+  onUpdateTable: (tableNumber: number, updates: Partial<Table>) => void;
+  onCloseTable: (table: Table) => void;
+  onOpenNewTable: (tableNumber: number, waiter: string) => void;
 }
 
-const BAR_CATEGORIES = ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'];
-const KITCHEN_CATEGORIES = ['pratos_principais', 'porcoes', 'saladas', 'molhos'];
-
-const INITIAL_TABLES: Table[] = Array.from({ length: 100 }, (_, i) => ({
-  number: i + 1,
-  waiter: '',
-  status: 'available',
-  lastInteraction: new Date(),
-  orders: [],
-  total: 0,
-}));
-
-export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps) {
-  const [activeView, setActiveView] = useState<'orders' | 'tables'>('orders');
-  const [tables, setTables] = useState<Table[]>(INITIAL_TABLES);
-
-  useEffect(() => {
-    // Update tables based on orders
-    const updatedTables = [...tables];
-    orders.forEach(order => {
-      const tableIndex = updatedTables.findIndex(t => t.number === order.table);
-      if (tableIndex !== -1) {
-        const table = updatedTables[tableIndex];
-        if (!table.orders.find(o => o.id === order.id)) {
-          table.orders.push(order);
-          table.total = table.orders.reduce((sum, o) => sum + o.total, 0);
-          table.status = 'occupied';
-          table.lastInteraction = new Date();
-          table.waiter = order.waiter || table.waiter;
-        }
-      }
-    });
-    setTables(updatedTables);
-  }, [orders]);
-
-  const handleUpdateTable = (tableNumber: number, updates: Partial<Table>) => {
-    setTables(tables.map(table =>
-      table.number === tableNumber ? { ...table, ...updates } : table
-    ));
-  };
-
-  const handleCloseTable = (table: Table) => {
-    // Open Mercado Pago link with the total amount
-    window.open('https://link.mercadopago.com.br/likelooksolutions', '_blank');
-    
-    // Reset table
-    setTables(tables.map(t =>
-      t.number === table.number ? {
-        ...t,
-        status: 'available',
-        orders: [],
-        total: 0,
-        waiter: '',
-        lastInteraction: new Date()
-      } : t
-    ));
-  };
+export function AdminPanel({
+  orders,
+  onUpdateStatus,
+  onClose,
+  currentUser,
+  tables,
+  onUpdateTable,
+  onCloseTable,
+  onOpenNewTable
+}: AdminPanelProps) {
+  const [activeView, setActiveView] = useState<'orders' | 'tables' | 'history'>('tables');
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -107,6 +67,17 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
               Mesas
             </button>
             <button
+              onClick={() => setActiveView('history')}
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                activeView === 'history'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              <HistoryIcon size={18} />
+              Histórico
+            </button>
+            <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
@@ -115,13 +86,23 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
           </div>
         </div>
 
-        {activeView === 'tables' ? (
+        {activeView === 'tables' && (
           <TableGrid
             tables={tables}
-            onUpdateTable={handleUpdateTable}
-            onCloseTable={handleCloseTable}
+            onUpdateTable={onUpdateTable}
+            onCloseTable={onCloseTable}
+            onOpenNewTable={onOpenNewTable}
           />
-        ) : (
+        )}
+        
+        {activeView === 'history' && (
+          <OrderHistory
+            orders={orders}
+            onClose={() => setActiveView('tables')}
+          />
+        )}
+
+        {activeView === 'orders' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-orange-50 p-6 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
@@ -130,7 +111,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
               </div>
               {orders
                 .filter(order => order.items.some(item => 
-                  KITCHEN_CATEGORIES.includes(item.product.category)
+                  ['pratos_principais', 'porcoes', 'saladas', 'molhos'].includes(item.product.category)
                 ))
                 .map(order => (
                   <OrderCard
@@ -138,7 +119,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
                     order={order}
                     getStatusColor={getStatusColor}
                     onUpdateStatus={onUpdateStatus}
-                    categories={KITCHEN_CATEGORIES}
+                    categories={['pratos_principais', 'porcoes', 'saladas', 'molhos']}
                   />
                 ))}
             </div>
@@ -150,7 +131,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
               </div>
               {orders
                 .filter(order => order.items.some(item => 
-                  BAR_CATEGORIES.includes(item.product.category)
+                  ['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas'].includes(item.product.category)
                 ))
                 .map(order => (
                   <OrderCard
@@ -158,7 +139,7 @@ export function AdminPanel({ orders, onUpdateStatus, onClose }: AdminPanelProps)
                     order={order}
                     getStatusColor={getStatusColor}
                     onUpdateStatus={onUpdateStatus}
-                    categories={BAR_CATEGORIES}
+                    categories={['destilados', 'cervejas', 'vinhos', 'nao_alcoolicas']}
                   />
                 ))}
             </div>
@@ -198,6 +179,59 @@ function OrderCard({
     0
   );
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const orderDate = new Date(order.timestamp).toLocaleString();
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Pedido #${order.id}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .order-info { margin-bottom: 20px; }
+          .items { margin-bottom: 20px; }
+          .item { margin-bottom: 10px; }
+          .total { font-weight: bold; margin-top: 20px; }
+          @media print {
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Beach Kiosk</h1>
+          <p>Pedido #${order.id}</p>
+        </div>
+        <div class="order-info">
+          <p>Data: ${orderDate}</p>
+          <p>Mesa: ${order.table}</p>
+          <p>Garçom: ${order.waiter}</p>
+          <p>Status: ${order.status}</p>
+        </div>
+        <div class="items">
+          <h2>Itens:</h2>
+          ${filteredItems.map(item => `
+            <div class="item">
+              ${item.quantity}x ${item.product.name} - R$ ${(item.product.price * item.quantity).toFixed(2)}
+            </div>
+          `).join('')}
+        </div>
+        <div class="total">
+          Total: R$ ${total.toFixed(2)}
+        </div>
+        <button class="no-print" onclick="window.print()">Imprimir</button>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
       <div className="flex justify-between items-start mb-4">
@@ -233,6 +267,13 @@ function OrderCard({
           <span className="ml-2 font-semibold">R$ {total.toFixed(2)}</span>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+          >
+            <Printer size={18} />
+            Imprimir
+          </button>
           <button
             onClick={() => onUpdateStatus(order.id, nextStatus[order.status])}
             className={`px-4 py-2 rounded-lg transition-colors ${
