@@ -21,6 +21,11 @@ export interface Table {
   total: number;
 }
 
+export interface ClosedTable extends Omit<Table, 'status'> {
+  closedAt: Date;
+  duration: number; // in minutes
+}
+
 export interface Order {
   id: string;
   items: CartItem[];
