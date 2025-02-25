@@ -4,23 +4,33 @@ import { AnimatedText } from './AnimatedText';
 
 interface SplashScreenProps {
   onComplete: () => void;
+  isRest?: boolean;
 }
 
-export function SplashScreen({ onComplete }: SplashScreenProps) {
+export function SplashScreen({ onComplete, isRest = false }: SplashScreenProps) {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShow(false);
-      setTimeout(onComplete, 500); // Aguarda a animação de saída terminar
-    }, 2500); // Tempo total da splash screen
+    if (!isRest) {
+      const timer = setTimeout(() => {
+        setShow(false);
+        setTimeout(onComplete, 500);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [onComplete, isRest]);
 
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+  const handleClick = () => {
+    if (isRest) {
+      setShow(false);
+      setTimeout(onComplete, 500);
+    }
+  };
 
   return (
     <div
-      className={`fixed inset-0 bg-blue-500 flex items-center justify-center transition-opacity duration-500 z-50 ${
+      onClick={handleClick}
+      className={`fixed inset-0 bg-blue-500 flex items-center justify-center transition-opacity duration-500 z-50 cursor-pointer ${
         show ? 'opacity-100' : 'opacity-0'
       }`}
     >
@@ -30,7 +40,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           className="mx-auto mb-4 animate-[bounce_2s_ease-in-out_infinite]" 
         />
         <AnimatedText
-          text="Beach Kiosk"
+          text={isRest ? "Clique para voltar" : "Beach Kiosk"}
           className="text-4xl font-bold"
         />
       </div>
