@@ -5,10 +5,12 @@ import { Cart } from './components/Cart';
 import { AdminPanel } from './components/AdminPanel';
 import { AdminAuth } from './components/AdminAuth';
 import { Footer } from './components/Footer';
+import { SplashScreen } from './components/SplashScreen';
 import { products } from './data/products';
 import type { CartItem, Order, Product } from './types';
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -53,7 +55,7 @@ function App() {
       status: 'pending',
       total,
       timestamp: new Date(),
-      table: 'Table 1', // In a real app, this would be selected by the user
+      table: 'Table 1',
     };
 
     setOrders((prev) => [...prev, newOrder]);
@@ -77,6 +79,10 @@ function App() {
     setShowAdminAuth(false);
     setShowAdmin(true);
   };
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

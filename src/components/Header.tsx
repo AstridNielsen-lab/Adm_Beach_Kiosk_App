@@ -1,5 +1,6 @@
 import { ShoppingCart, UmbrellaIcon } from 'lucide-react';
 import React from 'react';
+import { AnimatedText } from './AnimatedText';
 
 interface HeaderProps {
   cartItemCount: number;
@@ -11,9 +12,12 @@ export function Header({ cartItemCount, onCartClick, onAdminClick }: HeaderProps
   return (
     <header className="bg-blue-500 text-white p-4 sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2 text-2xl font-bold">
-          <UmbrellaIcon size={32} />
-          <span>Beach Kiosk</span>
+        <div className="flex items-center gap-2">
+          <UmbrellaIcon size={32} className="animate-[bounce_2s_ease-in-out_infinite]" />
+          <AnimatedText
+            text="Beach Kiosk"
+            className="text-2xl font-bold"
+          />
         </div>
         <div className="flex items-center gap-4">
           <button
