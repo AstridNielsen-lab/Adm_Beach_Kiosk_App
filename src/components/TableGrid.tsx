@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, DollarSign, Plus, UtensilsCrossed, History, CreditCard, Printer } from 'lucide-react';
 import type { Table, Order, ClosedTable, PaymentMethod } from '../types';
+import { TableChat } from './TableChat';
 
 interface TableGridProps {
   tables: Table[];
@@ -490,7 +491,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
               <div className="flex gap-2 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  className="flex- 1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
                   Abrir Mesa
                 </button>
@@ -557,7 +558,14 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
                   <p>Total: R$ {table.total.toFixed(2)}</p>
                 </div>
 
-                <div className="space-y-2">
+                <TableChat
+                  table={table}
+                  onUpdateChat={(messages) => {
+                    onUpdateTable(table.number, { chat: messages });
+                  }}
+                />
+
+                <div className="space-y-2 mt-4">
                   <button
                     onClick={() => {
                       const currentTable = table.number;
