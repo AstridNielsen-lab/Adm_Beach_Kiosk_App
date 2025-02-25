@@ -9,39 +9,101 @@ import { SplashScreen } from './components/SplashScreen';
 import { products } from './data/products';
 import type { CartItem, Order, Product, User, Table } from './types';
 
+const BACKUP_INTERVAL = 3 * 60 * 1000; // 3 minutes in milliseconds
+const LOCAL_STORAGE_KEYS = {
+  TABLES: 'beachKiosk_tables',
+  ORDERS: 'beachKiosk_orders',
+  BACKUP_TIME: 'beachKiosk_lastBackup',
+  USER: 'beachKioskUser',
+};
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showAdminAuth, setShowAdminAuth] = useState(false);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const savedOrders = localStorage.getItem(LOCAL_STORAGE_KEYS.ORDERS);
+    return savedOrders ? JSON.parse(savedOrders) : [];
+  });
   const [currentTable, setCurrentTable] = useState<number>(0);
   const [currentWaiter, setCurrentWaiter] = useState<string>('');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [tables, setTables] = useState<Table[]>(
-    Array.from({ length: 100 }, (_, i) => ({
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      const sessionAge = Date.now() - new Date(user.timestamp).getTime();
+      return sessionAge < 8 * 60 * 60 * 1000 ? user : null;
+    }
+    return null;
+  });
+  const [tables, setTables] = useState<Table[]>(() => {
+    const savedTables = localStorage.getItem(LOCAL_STORAGE_KEYS.TABLES);
+    if (savedTables) {
+      return JSON.parse(savedTables, (key, value) => {
+        if (key === 'lastInteraction') return new Date(value);
+        return value;
+      });
+    }
+    return Array.from({ length: 100 }, (_, i) => ({
       number: i + 1,
       waiter: '',
       status: 'available',
       lastInteraction: new Date(),
       orders: [],
       total: 0,
-    }))
-  );
+    }));
+  });
+
+  // Automatic backup system
+  useEffect(() => {
+    const backupData = () => {
+      if (!currentUser) return;
+
+      const now = new Date().toISOString();
+      localStorage.setItem(LOCAL_STORAGE_KEYS.TABLES, JSON.stringify(tables));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.BACKUP_TIME, now);
+      
+      console.log(`Backup automático realizado em ${new Date().toLocaleTimeString()}`);
+    };
+
+    const backupInterval = setInterval(backupData, BACKUP_INTERVAL);
+
+    // Backup on user actions that modify data
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        backupData();
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      backupData();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(backupInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [tables, orders, currentUser]);
 
   useEffect(() => {
     // Check for existing user session
-    const savedUser = localStorage.getItem('beachKioskUser');
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
     if (savedUser) {
       const user = JSON.parse(savedUser);
       // Check if the session is less than 8 hours old
       const sessionAge = Date.now() - new Date(user.timestamp).getTime();
-      if (sessionAge < 8 * 60 * 60 * 1000) { // 8 hours in milliseconds
+      if (sessionAge < 8 * 60 * 60 * 1000) {
         setCurrentUser(user);
         setShowAdmin(true);
       } else {
-        localStorage.removeItem('beachKioskUser');
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
       }
     }
 
@@ -168,7 +230,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('beachKioskUser');
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
     setCurrentUser(null);
     setShowAdmin(false);
   };
