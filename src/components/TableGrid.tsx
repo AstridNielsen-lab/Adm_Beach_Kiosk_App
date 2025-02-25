@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, DollarSign, Plus, UtensilsCrossed } from 'lucide-react';
-import type { Table, Order } from '../types';
+import { Clock, DollarSign, Plus, UtensilsCrossed, History } from 'lucide-react';
+import type { Table, Order, ClosedTable } from '../types';
 
 interface TableGridProps {
   tables: Table[];
@@ -13,6 +13,16 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableWaiter, setNewTableWaiter] = useState('');
   const [showNewTableForm, setShowNewTableForm] = useState(false);
+  const [showClosedTables, setShowClosedTables] = useState(false);
+  const [closedTables, setClosedTables] = useState<ClosedTable[]>(() => {
+    const saved = localStorage.getItem('closedTables');
+    return saved ? JSON.parse(saved, (key, value) => {
+      if (key === 'closedAt' || key === 'lastInteraction') {
+        return new Date(value);
+      }
+      return value;
+    }) : [];
+  });
   const [timers, setTimers] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
@@ -127,18 +137,101 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     }
   };
 
+  const handleCloseTable = (table: Table) => {
+    const duration = Math.floor(
+      (Date.now() - new Date(table.lastInteraction).getTime()) / (1000 * 60)
+    );
+    
+    const closedTable: ClosedTable = {
+      ...table,
+      closedAt: new Date(),
+      duration
+    };
+
+    setClosedTables(prev => {
+      const updated = [closedTable, ...prev].slice(0, 100); // Keep last 100 entries
+      localStorage.setItem('closedTables', JSON.stringify(updated));
+      return updated;
+    });
+
+    onCloseTable(table);
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}min`;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-green-800">Controle de Mesas</h2>
-        <button
-          onClick={() => setShowNewTableForm(true)}
-          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
-        >
-          <Plus size={20} />
-          Abrir Nova Mesa
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setShowClosedTables(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+          >
+            <History size={20} />
+            Mesas Fechadas
+          </button>
+          <button
+            onClick={() => setShowNewTableForm(true)}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Abrir Nova Mesa
+          </button>
+        </div>
       </div>
+
+      {showClosedTables && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <History size={24} />
+                Histórico de Mesas Fechadas
+              </h3>
+              <button
+                onClick={() => setShowClosedTables(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Plus size={24} className="rotate-45" />
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="py-3 px-4">Mesa</th>
+                    <th className="py-3 px-4">Garçom</th>
+                    <th className="py-3 px-4">Pedidos</th>
+                    <th className="py-3 px-4">Total</th>
+                    <th className="py-3 px-4">Duração</th>
+                    <th className="py-3 px-4">Fechado em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedTables.map((table, index) => (
+                    <tr key={`${table.number}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">{table.number}</td>
+                      <td className="py-3 px-4">{table.waiter}</td>
+                      <td className="py-3 px-4">{table.orders.length}</td>
+                      <td className="py-3 px-4">R$ {table.total.toFixed(2)}</td>
+                      <td className="py-3 px-4">{formatDuration(table.duration)}</td>
+                      <td className="py-3 px-4">
+                        {new Date(table.closedAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showNewTableForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -252,7 +345,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
                   </button>
 
                   <button
-                    onClick={() => onCloseTable(table)}
+                    onClick={() => handleCloseTable(table)}
                     className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
                   >
                     <DollarSign size={16} />
