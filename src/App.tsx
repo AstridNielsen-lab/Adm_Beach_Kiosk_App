@@ -61,7 +61,6 @@ function App() {
       }
       return [...items, { product, quantity: 1 }];
     });
-    setShowCart(true);
   };
 
   const updateCartItemQuantity = (productId: string, change: number) => {
