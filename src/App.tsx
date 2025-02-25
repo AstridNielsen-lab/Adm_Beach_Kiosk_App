@@ -7,7 +7,7 @@ import { AdminAuth } from './components/AdminAuth';
 import { Footer } from './components/Footer';
 import { SplashScreen } from './components/SplashScreen';
 import { products } from './data/products';
-import type { CartItem, Order, Product, User } from './types';
+import type { CartItem, Order, Product, User, Table } from './types';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -19,6 +19,16 @@ function App() {
   const [currentTable, setCurrentTable] = useState<number>(0);
   const [currentWaiter, setCurrentWaiter] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [tables, setTables] = useState<Table[]>(
+    Array.from({ length: 100 }, (_, i) => ({
+      number: i + 1,
+      waiter: '',
+      status: 'available',
+      lastInteraction: new Date(),
+      orders: [],
+      total: 0,
+    }))
+  );
 
   useEffect(() => {
     // Check for existing user session
@@ -34,6 +44,20 @@ function App() {
         localStorage.removeItem('beachKioskUser');
       }
     }
+
+    // Listen for table order events
+    const handleTableOrder = (event: CustomEvent<{ tableNumber: number; waiter: string }>) => {
+      setCurrentTable(event.detail.tableNumber);
+      setCurrentWaiter(event.detail.waiter);
+      setShowAdmin(false);
+      setCartItems([]);
+    };
+
+    window.addEventListener('openTableOrder', handleTableOrder as EventListener);
+
+    return () => {
+      window.removeEventListener('openTableOrder', handleTableOrder as EventListener);
+    };
   }, []);
 
   const addToCart = (product: Product) => {
@@ -48,6 +72,13 @@ function App() {
       
       setCurrentTable(Number(tableNumber));
       setCurrentWaiter(waiterName || '');
+
+      // Update table status
+      setTables(tables.map(table =>
+        table.number === Number(tableNumber)
+          ? { ...table, status: 'occupied', waiter: waiterName || '', lastInteraction: new Date() }
+          : table
+      ));
     }
 
     setCartItems((items) => {
@@ -97,6 +128,19 @@ function App() {
     };
 
     setOrders((prev) => [...prev, newOrder]);
+    
+    // Update table information
+    setTables(tables.map(table =>
+      table.number === currentTable
+        ? {
+            ...table,
+            orders: [...table.orders, newOrder],
+            total: table.total + total,
+            lastInteraction: new Date()
+          }
+        : table
+    ));
+
     setCartItems([]);
     setShowCart(false);
   };
@@ -127,6 +171,39 @@ function App() {
     localStorage.removeItem('beachKioskUser');
     setCurrentUser(null);
     setShowAdmin(false);
+  };
+
+  const handleOpenNewTable = (tableNumber: number, waiter: string) => {
+    setCurrentTable(tableNumber);
+    setCurrentWaiter(waiter);
+    setTables(tables.map(table =>
+      table.number === tableNumber
+        ? { ...table, status: 'occupied', waiter, lastInteraction: new Date() }
+        : table
+    ));
+    setShowAdmin(false);
+    setCartItems([]);
+  };
+
+  const handleCloseTable = (table: Table) => {
+    setTables(tables.map(t =>
+      t.number === table.number
+        ? {
+            ...t,
+            status: 'available',
+            orders: [],
+            total: 0,
+            waiter: '',
+            lastInteraction: new Date()
+          }
+        : t
+    ));
+
+    if (currentTable === table.number) {
+      setCurrentTable(0);
+      setCurrentWaiter('');
+      setCartItems([]);
+    }
   };
 
   if (showSplash) {
@@ -211,6 +288,14 @@ function App() {
           onUpdateStatus={updateOrderStatus}
           onClose={() => setShowAdmin(false)}
           currentUser={currentUser}
+          tables={tables}
+          onUpdateTable={(tableNumber, updates) =>
+            setTables(tables.map(table =>
+              table.number === tableNumber ? { ...table, ...updates } : table
+            ))
+          }
+          onCloseTable={handleCloseTable}
+          onOpenNewTable={handleOpenNewTable}
         />
       )}
     </div>
