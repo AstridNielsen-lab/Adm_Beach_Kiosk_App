@@ -16,8 +16,23 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [showAdminAuth, setShowAdminAuth] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [currentTable, setCurrentTable] = useState<number>(0);
+  const [currentWaiter, setCurrentWaiter] = useState<string>('');
 
   const addToCart = (product: Product) => {
+    if (currentTable === 0) {
+      const tableNumber = prompt('Por favor, insira o número da mesa (1-100):');
+      const waiterName = prompt('Nome do Garçom:');
+      
+      if (!tableNumber || isNaN(Number(tableNumber)) || Number(tableNumber) < 1 || Number(tableNumber) > 100) {
+        alert('Por favor, insira um número de mesa válido (1-100)');
+        return;
+      }
+      
+      setCurrentTable(Number(tableNumber));
+      setCurrentWaiter(waiterName || '');
+    }
+
     setCartItems((items) => {
       const existingItem = items.find((item) => item.product.id === product.id);
       if (existingItem) {
@@ -29,6 +44,7 @@ function App() {
       }
       return [...items, { product, quantity: 1 }];
     });
+    setShowCart(true);
   };
 
   const updateCartItemQuantity = (productId: string, change: number) => {
@@ -44,6 +60,11 @@ function App() {
   };
 
   const handleCheckout = () => {
+    if (currentTable === 0) {
+      alert('Por favor, selecione uma mesa antes de fazer o pedido');
+      return;
+    }
+
     const total = cartItems.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
@@ -55,7 +76,8 @@ function App() {
       status: 'pending',
       total,
       timestamp: new Date(),
-      table: 'Table 1',
+      table: currentTable,
+      waiter: currentWaiter
     };
 
     setOrders((prev) => [...prev, newOrder]);
@@ -104,6 +126,14 @@ function App() {
       />
 
       <main className="container mx-auto p-6 flex-1">
+        {currentTable > 0 && (
+          <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+            <p className="text-lg font-semibold">
+              Mesa atual: {currentTable} | Garçom: {currentWaiter}
+            </p>
+          </div>
+        )}
+
         <h1 className="text-4xl font-bold mb-8 text-green-800 text-center">
           Cardápio
         </h1>

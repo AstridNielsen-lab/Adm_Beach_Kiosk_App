@@ -12,11 +12,21 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface Table {
+  number: number;
+  waiter: string;
+  status: 'available' | 'occupied' | 'attention' | 'urgent';
+  lastInteraction: Date;
+  orders: Order[];
+  total: number;
+}
+
 export interface Order {
   id: string;
   items: CartItem[];
   status: 'pending' | 'preparing' | 'ready' | 'delivered';
   total: number;
   timestamp: Date;
-  table: string;
+  table: number;
+  waiter: string;
 }
