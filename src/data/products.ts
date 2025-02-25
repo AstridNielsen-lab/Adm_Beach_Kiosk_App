@@ -9,11 +9,11 @@ export const products = [
   },
   {
     id: '2',
-    name: 'Coconut Water',
-    description: 'Fresh natural coconut water',
+    name: 'Sucos Naturais',
+    description: 'Variedade de sucos naturais frescos da fruta',
     price: 15.00,
     category: 'drink',
-    image: 'https://images.unsplash.com/photo-1546445317-29f4545e9d53?auto=format&fit=crop&q=80&w=500',
+    image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&q=80&w=500',
   },
   {
     id: '3',
