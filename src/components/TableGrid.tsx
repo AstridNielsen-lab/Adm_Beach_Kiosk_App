@@ -13,22 +13,39 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableWaiter, setNewTableWaiter] = useState('');
   const [showNewTableForm, setShowNewTableForm] = useState(false);
+  const [timers, setTimers] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const newTimers: { [key: number]: string } = {};
+      
       tables.forEach(table => {
-        if (table.status === 'occupied') {
+        if (table.status !== 'available') {
           const timeSinceLastInteraction = Date.now() - new Date(table.lastInteraction).getTime();
           const minutesPassed = Math.floor(timeSinceLastInteraction / (1000 * 60));
+          const secondsPassed = Math.floor((timeSinceLastInteraction % (1000 * 60)) / 1000);
+          
+          // Formatar o tempo restante
+          const timeLeft = 40 - minutesPassed;
+          if (timeLeft > 0) {
+            const minutes = timeLeft - 1;
+            const seconds = 60 - secondsPassed;
+            newTimers[table.number] = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          } else {
+            newTimers[table.number] = '00:00';
+          }
 
-          if (minutesPassed >= 40) {
+          // Atualizar status da mesa baseado no tempo
+          if (minutesPassed >= 40 && table.status !== 'urgent') {
             onUpdateTable(table.number, { status: 'urgent' });
-          } else if (minutesPassed >= 20) {
+          } else if (minutesPassed >= 20 && table.status !== 'attention') {
             onUpdateTable(table.number, { status: 'attention' });
           }
         }
       });
-    }, 60000); // Check every minute
+
+      setTimers(newTimers);
+    }, 1000); // Atualizar a cada segundo
 
     return () => clearInterval(interval);
   }, [tables]);
@@ -139,10 +156,19 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-bold">Mesa {table.number}</h3>
               {table.status !== 'available' && (
-                <Clock
-                  size={20}
-                  className={table.status === 'urgent' ? 'text-red-500 animate-pulse' : ''}
-                />
+                <div className="flex items-center gap-2">
+                  <Clock
+                    size={20}
+                    className={table.status === 'urgent' ? 'text-red-500 animate-pulse' : ''}
+                  />
+                  <span className={`text-sm font-mono ${
+                    table.status === 'urgent' ? 'text-red-600 font-bold' :
+                    table.status === 'attention' ? 'text-yellow-600 font-bold' :
+                    'text-gray-600'
+                  }`}>
+                    {timers[table.number] || '40:00'}
+                  </span>
+                </div>
               )}
             </div>
 
