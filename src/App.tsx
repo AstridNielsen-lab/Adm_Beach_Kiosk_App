@@ -19,6 +19,7 @@ const LOCAL_STORAGE_KEYS = {
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [isResting, setIsResting] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -272,6 +273,10 @@ function App() {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
+  if (isResting) {
+    return <SplashScreen onComplete={() => setIsResting(false)} isRest />;
+  }
+
   const categories = {
     destilados: 'Destilados',
     cervejas: 'Cervejas',
@@ -291,6 +296,7 @@ function App() {
         onAdminClick={handleAdminClick}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onRestClick={() => setIsResting(true)}
       />
 
       <main className="container mx-auto p-6 flex-1">
