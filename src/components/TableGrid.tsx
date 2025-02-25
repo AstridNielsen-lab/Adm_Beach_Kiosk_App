@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, DollarSign, Plus, UtensilsCrossed, History } from 'lucide-react';
+import { Clock, DollarSign, Plus, UtensilsCrossed, History, CreditCard } from 'lucide-react';
 import type { Table, Order, ClosedTable } from '../types';
 
 interface TableGridProps {
@@ -9,11 +9,111 @@ interface TableGridProps {
   onOpenNewTable: (tableNumber: number, waiter: string) => void;
 }
 
+interface PaymentModalProps {
+  table: Table;
+  onClose: () => void;
+  onConfirm: (table: Table, paymentMethod: string) => void;
+}
+
+function PaymentModal({ table, onClose, onConfirm }: PaymentModalProps) {
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+
+  const handlePayment = () => {
+    if (paymentMethod === 'mercadopago') {
+      window.open('https://link.mercadopago.com.br/likelooksolutions', '_blank');
+    }
+    onConfirm(table, paymentMethod);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <DollarSign size={24} />
+          Fechar Mesa {table.number}
+        </h3>
+        
+        <div className="mb-6">
+          <p className="text-lg font-semibold mb-2">Total: R$ {table.total.toFixed(2)}</p>
+          <p className="text-sm text-gray-600">Selecione a forma de pagamento:</p>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <input
+              type="radio"
+              name="payment"
+              value="cash"
+              checked={paymentMethod === 'cash'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span>Dinheiro</span>
+          </label>
+          
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <input
+              type="radio"
+              name="payment"
+              value="card"
+              checked={paymentMethod === 'card'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span>Cartão de Crédito/Débito</span>
+          </label>
+          
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <input
+              type="radio"
+              name="payment"
+              value="pix"
+              checked={paymentMethod === 'pix'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span>PIX</span>
+          </label>
+
+          <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            <input
+              type="radio"
+              name="payment"
+              value="mercadopago"
+              checked={paymentMethod === 'mercadopago'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-4 h-4 text-blue-600"
+            />
+            <span>Mercado Pago</span>
+          </label>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handlePayment}
+            className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <CreditCard size={20} />
+            Confirmar Pagamento
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable }: TableGridProps) {
   const [newTableNumber, setNewTableNumber] = useState('');
   const [newTableWaiter, setNewTableWaiter] = useState('');
   const [showNewTableForm, setShowNewTableForm] = useState(false);
   const [showClosedTables, setShowClosedTables] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState<Table | null>(null);
   const [closedTables, setClosedTables] = useState<ClosedTable[]>(() => {
     const saved = localStorage.getItem('closedTables');
     return saved ? JSON.parse(saved, (key, value) => {
@@ -138,6 +238,10 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
   };
 
   const handleCloseTable = (table: Table) => {
+    setShowPaymentModal(table);
+  };
+
+  const handlePaymentConfirm = (table: Table, paymentMethod: string) => {
     const duration = Math.floor(
       (Date.now() - new Date(table.lastInteraction).getTime()) / (1000 * 60)
     );
@@ -155,6 +259,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
     });
 
     onCloseTable(table);
+    setShowPaymentModal(null);
   };
 
   const formatDuration = (minutes: number) => {
@@ -285,6 +390,14 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
             </div>
           </form>
         </div>
+      )}
+
+      {showPaymentModal && (
+        <PaymentModal
+          table={showPaymentModal}
+          onClose={() => setShowPaymentModal(null)}
+          onConfirm={handlePaymentConfirm}
+        />
       )}
 
       <div className="grid grid-cols-5 gap-4">
