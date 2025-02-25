@@ -16,8 +16,42 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
   const [timers, setTimers] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
+    // Load last interaction times from localStorage
+    const loadLastInteractions = () => {
+      const savedInteractions = localStorage.getItem('tableLastInteractions');
+      if (savedInteractions) {
+        const interactions = JSON.parse(savedInteractions);
+        tables.forEach(table => {
+          if (table.status !== 'available' && interactions[table.number]) {
+            table.lastInteraction = new Date(interactions[table.number]);
+          }
+        });
+      }
+    };
+
+    // Save last interaction times to localStorage
+    const saveLastInteractions = () => {
+      const interactions: { [key: number]: string } = {};
+      tables.forEach(table => {
+        if (table.status !== 'available') {
+          interactions[table.number] = table.lastInteraction.toISOString();
+        }
+      });
+      localStorage.setItem('tableLastInteractions', JSON.stringify(interactions));
+    };
+
+    // Check if user is logged in
+    const isLoggedIn = !!localStorage.getItem('beachKioskUser');
+    if (!isLoggedIn) {
+      localStorage.removeItem('tableLastInteractions');
+      return;
+    }
+
+    loadLastInteractions();
+
     const interval = setInterval(() => {
       const newTimers: { [key: number]: string } = {};
+      let needsUpdate = false;
       
       tables.forEach(table => {
         if (table.status !== 'available') {
@@ -25,7 +59,7 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
           const minutesPassed = Math.floor(timeSinceLastInteraction / (1000 * 60));
           const secondsPassed = Math.floor((timeSinceLastInteraction % (1000 * 60)) / 1000);
           
-          // Formatar o tempo restante
+          // Format remaining time
           const timeLeft = 40 - minutesPassed;
           if (timeLeft > 0) {
             const minutes = timeLeft - 1;
@@ -35,20 +69,35 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable 
             newTimers[table.number] = '00:00';
           }
 
-          // Atualizar status da mesa baseado no tempo
+          // Update table status based on time
           if (minutesPassed >= 40 && table.status !== 'urgent') {
             onUpdateTable(table.number, { status: 'urgent' });
+            needsUpdate = true;
           } else if (minutesPassed >= 20 && table.status !== 'attention') {
             onUpdateTable(table.number, { status: 'attention' });
+            needsUpdate = true;
           }
         }
       });
 
       setTimers(newTimers);
-    }, 1000); // Atualizar a cada segundo
+      if (needsUpdate) {
+        saveLastInteractions();
+      }
+    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [tables]);
+    // Save current state before unloading
+    const handleBeforeUnload = () => {
+      saveLastInteractions();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [tables, onUpdateTable]);
 
   const getTableColor = (status: Table['status']) => {
     switch (status) {
