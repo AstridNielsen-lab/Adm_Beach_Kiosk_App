@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { ProductCard } from './components/ProductCard';
 import { Cart } from './components/Cart';
 import { AdminPanel } from './components/AdminPanel';
+import { Footer } from './components/Footer';
 import { products } from './data/products';
 import type { CartItem, Order, Product } from './types';
 
@@ -67,14 +68,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setShowCart(true)}
         onAdminClick={() => setShowAdmin(true)}
       />
 
-      <main className="container mx-auto p-6">
+      <main className="container mx-auto p-6 flex-1">
         <h1 className="text-3xl font-bold mb-8">Menu</h1>
         
         <div className="mb-8">
@@ -107,6 +108,8 @@ function App() {
           </div>
         </div>
       </main>
+
+      <Footer />
 
       {showCart && (
         <Cart
