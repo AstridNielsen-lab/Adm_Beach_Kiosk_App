@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Clock, DollarSign } from 'lucide-react';
+import { Clock, DollarSign, Plus, UtensilsCrossed } from 'lucide-react';
 import type { Table, Order } from '../types';
 
 interface TableGridProps {
   tables: Table[];
   onUpdateTable: (tableNumber: number, updates: Partial<Table>) => void;
   onCloseTable: (table: Table) => void;
+  onOpenNewTable: (tableNumber: number, waiter: string) => void;
 }
 
-export function TableGrid({ tables, onUpdateTable, onCloseTable }: TableGridProps) {
+export function TableGrid({ tables, onUpdateTable, onCloseTable, onOpenNewTable }: TableGridProps) {
+  const [newTableNumber, setNewTableNumber] = useState('');
+  const [newTableWaiter, setNewTableWaiter] = useState('');
+  const [showNewTableForm, setShowNewTableForm] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(() => {
       tables.forEach(table => {
@@ -45,51 +50,145 @@ export function TableGrid({ tables, onUpdateTable, onCloseTable }: TableGridProp
     onUpdateTable(tableNumber, { waiter });
   };
 
+  const handleNewTable = (e: React.FormEvent) => {
+    e.preventDefault();
+    const tableNum = parseInt(newTableNumber);
+    if (tableNum > 0 && tableNum <= 100 && newTableWaiter.trim()) {
+      onOpenNewTable(tableNum, newTableWaiter.trim());
+      setNewTableNumber('');
+      setNewTableWaiter('');
+      setShowNewTableForm(false);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-5 gap-4 p-4">
-      {tables.map((table) => (
-        <div
-          key={table.number}
-          className={`${getTableColor(
-            table.status
-          )} p-4 rounded-lg shadow-md transition-all`}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-green-800">Controle de Mesas</h2>
+        <button
+          onClick={() => setShowNewTableForm(true)}
+          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
         >
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-bold">Mesa {table.number}</h3>
+          <Plus size={20} />
+          Abrir Nova Mesa
+        </button>
+      </div>
+
+      {showNewTableForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <form onSubmit={handleNewTable} className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <UtensilsCrossed size={24} />
+              Abrir Nova Mesa
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Número da Mesa (1-100)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={newTableNumber}
+                  onChange={(e) => setNewTableNumber(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome do Garçom
+                </label>
+                <input
+                  type="text"
+                  value={newTableWaiter}
+                  onChange={(e) => setNewTableWaiter(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  required
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Abrir Mesa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNewTableForm(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-5 gap-4">
+        {tables.map((table) => (
+          <div
+            key={table.number}
+            className={`${getTableColor(
+              table.status
+            )} p-4 rounded-lg shadow-md transition-all`}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-bold">Mesa {table.number}</h3>
+              {table.status !== 'available' && (
+                <Clock
+                  size={20}
+                  className={table.status === 'urgent' ? 'text-red-500 animate-pulse' : ''}
+                />
+              )}
+            </div>
+
             {table.status !== 'available' && (
-              <Clock
-                size={20}
-                className={table.status === 'urgent' ? 'text-red-500 animate-pulse' : ''}
-              />
+              <>
+                <input
+                  type="text"
+                  value={table.waiter}
+                  onChange={(e) => handleWaiterChange(table.number, e.target.value)}
+                  placeholder="Nome do Garçom"
+                  className="w-full px-2 py-1 rounded border mb-2 text-sm"
+                />
+
+                <div className="text-sm mb-2">
+                  <p>Pedidos: {table.orders.length}</p>
+                  <p>Total: R$ {table.total.toFixed(2)}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      const currentTable = table.number;
+                      const currentWaiter = table.waiter;
+                      window.dispatchEvent(new CustomEvent('openTableOrder', {
+                        detail: { tableNumber: currentTable, waiter: currentWaiter }
+                      }));
+                    }}
+                    className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Plus size={16} />
+                    Adicionar Itens
+                  </button>
+
+                  <button
+                    onClick={() => onCloseTable(table)}
+                    className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <DollarSign size={16} />
+                    Fechar Mesa
+                  </button>
+                </div>
+              </>
             )}
           </div>
-
-          {table.status !== 'available' && (
-            <>
-              <input
-                type="text"
-                value={table.waiter}
-                onChange={(e) => handleWaiterChange(table.number, e.target.value)}
-                placeholder="Nome do Garçom"
-                className="w-full px-2 py-1 rounded border mb-2 text-sm"
-              />
-
-              <div className="text-sm mb-2">
-                <p>Pedidos: {table.orders.length}</p>
-                <p>Total: R$ {table.total.toFixed(2)}</p>
-              </div>
-
-              <button
-                onClick={() => onCloseTable(table)}
-                className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <DollarSign size={16} />
-                Fechar Mesa
-              </button>
-            </>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
