@@ -1,0 +1,7 @@
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.csproj.AssemblyReference.cache
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.GeneratedMSBuildEditorConfig.editorconfig
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.AssemblyInfoInputs.cache
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.AssemblyInfo.cs
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.csproj.CoreCompileInputs.cache
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.MvcApplicationPartsAssemblyInfo.cs
+C:\AdmBeach\API_Backend\obj\Release\net9.0\API_Backend.MvcApplicationPartsAssemblyInfo.cache

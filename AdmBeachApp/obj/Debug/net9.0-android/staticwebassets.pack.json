@@ -1,0 +1,45 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\AdmBeach\\AdmBeachApp\\obj\\Debug\\net9.0-android\\scopedcss\\bundle\\AdmBeachApp.styles.css",
+      "PackagePath": "staticwebassets\\AdmBeachApp.styles.css"
+    },
+    {
+      "Id": "C:\\AdmBeach\\AdmBeachApp\\wwwroot\\css\\app.css",
+      "PackagePath": "staticwebassets\\css\\app.css"
+    },
+    {
+      "Id": "C:\\AdmBeach\\AdmBeachApp\\wwwroot\\css\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\AdmBeach\\AdmBeachApp\\wwwroot\\css\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\AdmBeach\\AdmBeachApp\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-android\\staticwebassets\\msbuild.AdmBeachApp.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-android\\staticwebassets\\msbuild.AdmBeachApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-android\\staticwebassets\\msbuild.build.AdmBeachApp.props",
+      "PackagePath": "build\\AdmBeachApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-android\\staticwebassets\\msbuild.buildMultiTargeting.AdmBeachApp.props",
+      "PackagePath": "buildMultiTargeting\\AdmBeachApp.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0-android\\staticwebassets\\msbuild.buildTransitive.AdmBeachApp.props",
+      "PackagePath": "buildTransitive\\AdmBeachApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

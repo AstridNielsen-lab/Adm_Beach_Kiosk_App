@@ -1,0 +1,12 @@
+@page "/login"
+@inject IJSRuntime JS
+
+<h3>Login</h3>
+<button @onclick="LoginGoogle" class="btn btn-primary">Login com Google</button>
+
+@code {
+    private async Task LoginGoogle()
+    {
+        await JS.InvokeVoidAsync("open", "https://localhost:5209/api/auth/google", "_self");
+    }
+}
