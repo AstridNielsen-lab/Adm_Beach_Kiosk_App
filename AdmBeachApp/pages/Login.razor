@@ -1,0 +1,27 @@
+@page "/login"
+@inject AdmBeachApp.Services.ApiService ApiService
+@inject NavigationManager Navigation
+
+<h3>Login com Google</h3>
+
+<button @onclick="FazerLogin">Entrar com Google</button>
+
+@code {
+    async Task FazerLogin()
+    {
+        string googleId = "123456789";
+        string nome = "Usuário Exemplo";
+        string email = "usuario@gmail.com";
+
+        bool sucesso = await ApiService.AutenticarUsuarioAsync(googleId, nome, email);
+
+        if (sucesso)
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Console.WriteLine("Falha ao autenticar usuário.");
+        }
+    }
+}

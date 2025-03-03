@@ -1,14 +1,12 @@
-﻿namespace AdmBeachApp;
+﻿using Microsoft.Maui.Controls;
 
-public partial class App : Application
+namespace AdmBeachApp
 {
-	public App()
-	{
-		InitializeComponent();
-	}
-
-	protected override Window CreateWindow(IActivationState? activationState)
-	{
-		return new Window(new MainPage()) { Title = "AdmBeachApp" };
-	}
+    public partial class App : Application
+    {
+        public App()
+        {
+            InitializeComponent();
+        }
+    }
 }

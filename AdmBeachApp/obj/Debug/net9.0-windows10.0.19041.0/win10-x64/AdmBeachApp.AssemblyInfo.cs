@@ -17,12 +17,12 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AdmBeachApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+1a662106fc50db619819c25d024825f78a7c776f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+470b2ebde6da55ea64e894a735fa50ea5446733f")]
 [assembly: System.Reflection.AssemblyProductAttribute("AdmBeachApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AdmBeachApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows10.0.19041.0")]
-[assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows10.0.17763.0")]
+[assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows10.0.19041.0")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.
 

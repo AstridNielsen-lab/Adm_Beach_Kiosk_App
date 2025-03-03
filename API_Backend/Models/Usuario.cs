@@ -5,5 +5,6 @@ namespace API_Backend.Models
         public int Id { get; set; }
         public string? Nome { get; set; }
         public string? Email { get; set; }
+        public string? GoogleId { get; set; }
     }
 }
