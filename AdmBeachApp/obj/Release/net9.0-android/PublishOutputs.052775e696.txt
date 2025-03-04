@@ -1,0 +1,4 @@
+C:\AdmBeach\AdmBeachApp\bin\Release\net9.0-android\publish\com.companyname.admbeachapp-Signed.aab
+C:\AdmBeach\AdmBeachApp\bin\Release\net9.0-android\publish\com.companyname.admbeachapp.aab
+C:\AdmBeach\AdmBeachApp\bin\Release\net9.0-android\publish\com.companyname.admbeachapp-Signed.apk
+C:\AdmBeach\AdmBeachApp\bin\Release\net9.0-android\publish\_Microsoft.Android.Resource.Designer.dll
