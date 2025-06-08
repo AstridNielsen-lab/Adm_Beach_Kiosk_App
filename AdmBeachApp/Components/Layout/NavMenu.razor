@@ -1,7 +1,41 @@
-﻿<nav>
-    <ul>
-        <li><a href="/">🏠 Início</a></li>
-        <li><a href="/produtos">📦 Produtos</a></li>
-        <li><a href="/vendas">💰 Vendas</a></li>
-    </ul>
-</nav>
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">AdmBeachApp</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <a class="nav-link" href="/">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true">🏠</span> Início
+            </a>
+        </div>
+
+        <div class="nav-item px-3">
+            <a class="nav-link" href="/frente-caixa">
+                <span class="bi bi-cash-register-nav-menu" aria-hidden="true">💰</span> Frente de Caixa
+            </a>
+        </div>
+
+        <div class="nav-item px-3">
+            <a class="nav-link" href="/login">
+                <span class="bi bi-person-nav-menu" aria-hidden="true">👤</span> Login
+            </a>
+        </div>
+
+        <div class="nav-item px-3">
+            <a class="nav-link" href="/counter">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true">➕</span> Counter
+            </a>
+        </div>
+
+        <div class="nav-item px-3">
+            <a class="nav-link" href="/weather">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true">🌦️</span> Weather
+            </a>
+        </div>
+    </nav>
+</div>

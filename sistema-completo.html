@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdmBeachApp - Sistema Completo de Gestão</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+            color: white;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            min-height: calc(100vh - 120px);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            border-bottom: 1px solid #eee;
+        }
+
+        .nav-link {
+            color: #333;
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Mesa Styles */
+        .mesa {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+            position: relative;
+            font-weight: bold;
+            color: white;
+        }
+
+        .mesa-livre {
+            background-color: var(--success-color);
+        }
+
+        .mesa-ocupada {
+            background-color: var(--danger-color);
+        }
+
+        .mesa-atencao {
+            background-color: var(--warning-color);
+            animation: pulse 2s infinite;
+        }
+
+        .mesa-urgente {
+            background-color: #ff0000;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .tempo-mesa {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #333;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mapa-mesas {
+            min-height: 400px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            background-image: radial-gradient(circle, #e3f2fd 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .produto-card, .garcon-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+
+        .produto-card:hover, .garcon-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .qr-code {
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .status-online {
+            color: var(--success-color);
+        }
+
+        .status-offline {
+            color: var(--danger-color);
+        }
+
+        .btn-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            z-index: 1000;
+        }
+
+        .legenda-mesas {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .item-legenda {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .cor-legenda {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-0">🏖️ AdmBeachApp</h1>
+                    <p class="mb-0">Sistema Completo de Gestão para Quiosques</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="fas fa-clock"></i> <span id="current-time"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                <div class="sidebar">
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="showSection('frente-caixa')">
+                            <i class="fas fa-cash-register"></i> Frente de Caixa
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('mapa-mesas')">
+                            <i class="fas fa-map"></i> Mapa das Mesas
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('estoque')">
+                            <i class="fas fa-boxes"></i> Estoque
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('garcons')">
+                            <i class="fas fa-users"></i> Garçons
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('produtos')">
+                            <i class="fas fa-plus-circle"></i> Cadastrar Produtos
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('qr-codes')">
+                            <i class="fas fa-qrcode"></i> QR Codes
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('relatorios')">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="col-md-10">
+                <div class="content-area">
+                    <!-- Frente de Caixa -->
+                    <div id="frente-caixa" class="section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-cash-register"></i> Frente de Caixa</h2>
+                            <div>
+                                <button class="btn btn-primary" onclick="showSection('mapa-mesas')">
+                                    <i class="fas fa-map"></i> Ver Mesas
+                                </button>
+                                <button class="btn btn-success" onclick="showSection('estoque')">
+                                    <i class="fas fa-boxes"></i> Estoque
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Produtos Disponíveis</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row" id="produtos-caixa">
+                                            <!-- Produtos serão carregados aqui -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">Carrinho</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="carrinho-vazio" class="text-center text-muted">
+                                            <p>Carrinho vazio</p>
+                                        </div>
+                                        <div id="carrinho-items" style="display: none;">
+                                            <!-- Itens do carrinho -->
+                                        </div>
+                                        <div id="carrinho-total" style="display: none;">
+                                            <hr>
+                                            <div class="d-flex justify-content-between">
+                                                <strong>Total: <span id="total-valor">R$ 0,00</span></strong>
+                                            </div>
+                                            <div class="mt-3">
+                                                <select class="form-select mb-2" id="mesa-select">
+                                                    <option value="">Selecionar Mesa</option>
+                                                </select>
+                                                <select class="form-select mb-2" id="forma-pagamento">
+                                                    <option value="Dinheiro">💵 Dinheiro</option>
+                                                    <option value="Cartão">💳 Cartão</option>
+                                                    <option value="PIX">📱 PIX</option>
+                                                </select>
+                                                <button class="btn btn-success w-100" onclick="finalizarVenda()">
+                                                    <i class="fas fa-check"></i> Finalizar Venda
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mapa das Mesas -->
+                    <div id="mapa-mesas" class="section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-map"></i> Mapa das Mesas</h2>
+                            <button class="btn btn-primary" onclick="adicionarMesa()">
+                                <i class="fas fa-plus"></i> Adicionar Mesa
+                            </button>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-lg-9">
+                                <div class="mapa-mesas" id="mapa-container">
+                                    <!-- Mesas serão adicionadas aqui dinamicamente -->
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="legenda-mesas">
+                                    <h5>Legenda</h5>
+                                    <div class="item-legenda">
+                                        <div class="cor-legenda" style="background-color: var(--success-color);"></div>
+                                        <span>Livre</span>
+                                    </div>
+                                    <div class="item-legenda">
+                                        <div class="cor-legenda" style="background-color: var(--danger-color);"></div>
+                                        <span>Ocupada</span>
+                                    </div>
+                                    <div class="item-legenda">
+                                        <div class="cor-legenda" style="background-color: var(--warning-color);"></div>
+                                        <span>Atenção (15+ min)</span>
+                                    </div>
+                                    <div class="item-legenda">
+                                        <div class="cor-legenda" style="background-color: #ff0000;"></div>
+                                        <span>Urgente (30+ min)</span>
+                                    </div>
+                                    
+                                    <hr>
+                                    <h6>Estatísticas</h6>
+                                    <p>Mesas Livres: <span id="mesas-livres">0</span></p>
+                                    <p>Mesas Ocupadas: <span id="mesas-ocupadas">0</span></p>
+                                    <p>Necessitam Atenção: <span id="mesas-atencao">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estoque -->
+                    <div id="estoque" class="section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-boxes"></i> Controle de Estoque</h2>
+                            <button class="btn btn-success" onclick="showSection('produtos')">
+                                <i class="fas fa-plus"></i> Cadastrar Produto
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Preço</th>
+                                        <th>Estoque Atual</th>
+                                        <th>Estoque Mínimo</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-estoque">
+                                    <!-- Produtos do estoque -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Garçons -->
+                    <div id="garcons" class="section" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-users"></i> Gestão de Garçons</h2>
+                            <button class="btn btn-success" onclick="cadastrarGarcon()">
+                                <i class="fas fa-user-plus"></i> Cadastrar Garçon
+                            </button>
+                        </div>
+                        
+                        <div class="row" id="lista-garcons">
+                            <!-- Garçons serão listados aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Cadastrar Produtos -->
+                    <div id="produtos" class="section" style="display: none;">
+                        <h2><i class="fas fa-plus-circle"></i> Cadastrar Produtos</h2>
+                        
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Novo Produto</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="form-produto">
+                                            <div class="mb-3">
+                                                <label class="form-label">Nome do Produto</label>
+                                                <input type="text" class="form-control" id="produto-nome" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Preço (R$)</label>
+                                                <input type="number" step="0.01" class="form-control" id="produto-preco" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Estoque Inicial</label>
+                                                <input type="number" class="form-control" id="produto-estoque" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Estoque Mínimo</label>
+                                                <input type="number" class="form-control" id="produto-estoque-min" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Ícone (Emoji)</label>
+                                                <input type="text" class="form-control" id="produto-icone" placeholder="🍔">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Categoria</label>
+                                                <select class="form-select" id="produto-categoria">
+                                                    <option>Bebidas</option>
+                                                    <option>Lanches</option>
+                                                    <option>Sobremesas</option>
+                                                    <option>Outros</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-success w-100">
+                                                <i class="fas fa-save"></i> Salvar Produto
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Produtos Cadastrados</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="lista-produtos">
+                                            <!-- Lista de produtos -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR Codes -->
+                    <div id="qr-codes" class="section" style="display: none;">
+                        <h2><i class="fas fa-qrcode"></i> QR Codes para Mesas</h2>
+                        
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Gerar QR Code</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Selecionar Mesa</label>
+                                            <select class="form-select" id="qr-mesa-select">
+                                                <option value="">Escolha uma mesa</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Garçon Responsável</label>
+                                            <select class="form-select" id="qr-garcon-select">
+                                                <option value="">Escolha um garçon</option>
+                                            </select>
+                                        </div>
+                                        <button class="btn btn-primary w-100" onclick="gerarQRCode()">
+                                            <i class="fas fa-qrcode"></i> Gerar QR Code
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>QR Code Gerado</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <div id="qr-display">
+                                            <p class="text-muted">Selecione uma mesa e garçon para gerar o QR Code</p>
+                                        </div>
+                                        <div id="qr-info" style="display: none;">
+                                            <p><strong>Mesa:</strong> <span id="qr-mesa-info"></span></p>
+                                            <p><strong>Garçon:</strong> <span id="qr-garcon-info"></span></p>
+                                            <p><strong>URL:</strong> <span id="qr-url-info"></span></p>
+                                            <button class="btn btn-success" onclick="imprimirQR()">
+                                                <i class="fas fa-print"></i> Imprimir
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relatórios -->
+                    <div id="relatorios" class="section" style="display: none;">
+                        <h2><i class="fas fa-chart-bar"></i> Relatórios</h2>
+                        
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-primary" id="vendas-hoje">R$ 0,00</h3>
+                                        <p>Vendas Hoje</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-success" id="pedidos-hoje">0</h3>
+                                        <p>Pedidos Hoje</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-warning" id="produto-mais-vendido">-</h3>
+                                        <p>Produto Mais Vendido</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 class="text-info" id="tempo-medio">0 min</h3>
+                                        <p>Tempo Médio de Atendimento</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais -->
+    <!-- Modal de Mesa -->
+    <div class="modal fade" id="modalMesa" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes da Mesa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Mesa:</strong> <span id="modal-mesa-numero"></span></p>
+                    <p><strong>Status:</strong> <span id="modal-mesa-status"></span></p>
+                    <p><strong>Tempo:</strong> <span id="modal-mesa-tempo"></span></p>
+                    <p><strong>Garçon:</strong> <span id="modal-mesa-garcon"></span></p>
+                    <div class="mt-3">
+                        <button class="btn btn-success" onclick="abrirMesa()">
+                            <i class="fas fa-door-open"></i> Abrir Mesa
+                        </button>
+                        <button class="btn btn-warning" onclick="chamarGarcon()">
+                            <i class="fas fa-bell"></i> Chamar Garçon
+                        </button>
+                        <button class="btn btn-danger" onclick="fecharMesa()">
+                            <i class="fas fa-times"></i> Fechar Mesa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div class="modal fade" id="modalConfirmacao" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">✅ Venda Finalizada!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Venda realizada com sucesso!</p>
+                    <p><strong>Total: <span id="modal-total">R$ 0,00</span></strong></p>
+                    <p><strong>Mesa: <span id="modal-mesa">-</span></strong></p>
+                    <p><strong>Forma de Pagamento: <span id="modal-forma-pagamento">-</span></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Dados globais
+        let produtos = [
+            { id: 1, nome: 'Água Mineral', preco: 3.00, estoque: 50, estoqueMin: 10, icone: '💧', categoria: 'Bebidas' },
+            { id: 2, nome: 'Refrigerante', preco: 5.50, estoque: 30, estoqueMin: 5, icone: '🥤', categoria: 'Bebidas' },
+            { id: 3, nome: 'Cerveja', preco: 8.00, estoque: 25, estoqueMin: 5, icone: '🍺', categoria: 'Bebidas' },
+            { id: 4, nome: 'Sanduíche', preco: 12.00, estoque: 15, estoqueMin: 3, icone: '🥪', categoria: 'Lanches' },
+            { id: 5, nome: 'Sorvete', preco: 6.00, estoque: 20, estoqueMin: 5, icone: '🍦', categoria: 'Sobremesas' },
+            { id: 6, nome: 'Açaí', preco: 15.00, estoque: 10, estoqueMin: 2, icone: '🍇', categoria: 'Sobremesas' }
+        ];
+
+        let mesas = [];
+        let garcons = [
+            { id: 1, nome: 'João Silva', status: 'online', foto: '👨‍🍳' },
+            { id: 2, nome: 'Maria Santos', status: 'online', foto: '👩‍🍳' },
+            { id: 3, nome: 'Pedro Costa', status: 'offline', foto: '👨‍🍳' }
+        ];
+
+        let carrinho = [];
+        let vendas = [];
+        let mesaSelecionada = null;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            inicializarSistema();
+            atualizarRelogio();
+            setInterval(atualizarRelogio, 1000);
+            setInterval(atualizarTempoMesas, 60000); // Atualiza a cada minuto
+        });
+
+        function inicializarSistema() {
+            // Criar mesas iniciais
+            for (let i = 1; i <= 12; i++) {
+                mesas.push({
+                    id: i,
+                    numero: i,
+                    status: 'livre',
+                    garcon: null,
+                    tempoOcupacao: 0,
+                    ultimaVisita: null,
+                    x: (i % 4) * 120 + 50,
+                    y: Math.floor((i-1) / 4) * 120 + 50
+                });
+            }
+            
+            carregarProdutosCaixa();
+            carregarEstoque();
+            carregarGarcons();
+            carregarMesas();
+            carregarListaProdutos();
+            atualizarSelects();
+        }
+
+        function atualizarRelogio() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('pt-BR');
+        }
+
+        function showSection(sectionId) {
+            // Ocultar todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remover classe active de todos os links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Mostrar seção selecionada
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Adicionar classe active ao link clicado
+            event.target.classList.add('active');
+        }
+
+        // Funções da Frente de Caixa
+        function carregarProdutosCaixa() {
+            const container = document.getElementById('produtos-caixa');
+            container.innerHTML = '';
+            
+            produtos.forEach(produto => {
+                if (produto.estoque > 0) {
+                    const produtoHtml = `
+                        <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+                            <div class="card produto-card" onclick="adicionarAoCarrinho(${produto.id})">
+                                <div class="card-body text-center">
+                                    <div style="font-size: 2rem;">${produto.icone}</div>
+                                    <h6 class="card-title">${produto.nome}</h6>
+                                    <p class="text-success fw-bold">R$ ${produto.preco.toFixed(2)}</p>
+                                    <small class="text-muted">Estoque: ${produto.estoque}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += produtoHtml;
+                }
+            });
+        }
+
+        function adicionarAoCarrinho(produtoId) {
+            const produto = produtos.find(p => p.id === produtoId);
+            if (!produto || produto.estoque <= 0) return;
+            
+            const itemExistente = carrinho.find(item => item.produto.id === produtoId);
+            
+            if (itemExistente) {
+                if (itemExistente.quantidade < produto.estoque) {
+                    itemExistente.quantidade++;
+                }
+            } else {
+                carrinho.push({ produto: produto, quantidade: 1 });
+            }
+            
+            atualizarCarrinho();
+        }
+
+        function atualizarCarrinho() {
+            const carrinhoVazio = document.getElementById('carrinho-vazio');
+            const carrinhoItems = document.getElementById('carrinho-items');
+            const carrinhoTotal = document.getElementById('carrinho-total');
+            
+            if (carrinho.length === 0) {
+                carrinhoVazio.style.display = 'block';
+                carrinhoItems.style.display = 'none';
+                carrinhoTotal.style.display = 'none';
+                return;
+            }
+            
+            carrinhoVazio.style.display = 'none';
+            carrinhoItems.style.display = 'block';
+            carrinhoTotal.style.display = 'block';
+            
+            let html = '';
+            let total = 0;
+            
+            carrinho.forEach((item, index) => {
+                const subtotal = item.produto.preco * item.quantidade;
+                total += subtotal;
+                
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                        <div>
+                            <strong>${item.produto.nome}</strong><br>
+                            <small>R$ ${item.produto.preco.toFixed(2)} x ${item.quantidade}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removerDoCarrinho(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            carrinhoItems.innerHTML = html;
+            document.getElementById('total-valor').textContent = `R$ ${total.toFixed(2)}`;
+        }
+
+        function removerDoCarrinho(index) {
+            carrinho.splice(index, 1);
+            atualizarCarrinho();
+        }
+
+        function finalizarVenda() {
+            if (carrinho.length === 0) return;
+            
+            const mesaId = document.getElementById('mesa-select').value;
+            const formaPagamento = document.getElementById('forma-pagamento').value;
+            const total = carrinho.reduce((sum, item) => sum + (item.produto.preco * item.quantidade), 0);
+            
+            // Atualizar estoque
+            carrinho.forEach(item => {
+                const produto = produtos.find(p => p.id === item.produto.id);
+                produto.estoque -= item.quantidade;
+            });
+            
+            // Registrar venda
+            vendas.push({
+                id: Date.now(),
+                items: [...carrinho],
+                total: total,
+                mesa: mesaId,
+                formaPagamento: formaPagamento,
+                timestamp: new Date()
+            });
+            
+            // Ocupar mesa se selecionada
+            if (mesaId) {
+                const mesa = mesas.find(m => m.id == mesaId);
+                if (mesa) {
+                    mesa.status = 'ocupada';
+                    mesa.tempoOcupacao = Date.now();
+                }
+            }
+            
+            // Mostrar modal de confirmação
+            document.getElementById('modal-total').textContent = `R$ ${total.toFixed(2)}`;
+            document.getElementById('modal-mesa').textContent = mesaId || 'Balcão';
+            document.getElementById('modal-forma-pagamento').textContent = formaPagamento;
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+            modal.show();
+            
+            // Limpar carrinho
+            carrinho = [];
+            atualizarCarrinho();
+            carregarProdutosCaixa();
+            carregarEstoque();
+            carregarMesas();
+            atualizarSelects();
+        }
+
+        // Funções do Mapa de Mesas
+        function carregarMesas() {
+            const container = document.getElementById('mapa-container');
+            container.innerHTML = '';
+            
+            let livres = 0, ocupadas = 0, atencao = 0;
+            
+            mesas.forEach(mesa => {
+                const agora = Date.now();
+                let classe = 'mesa-livre';
+                let tempo = '';
+                
+                if (mesa.status === 'ocupada') {
+                    ocupadas++;
+                    const minutos = Math.floor((agora - mesa.tempoOcupacao) / 60000);
+                    tempo = `${minutos}min`;
+                    
+                    if (minutos >= 30) {
+                        classe = 'mesa-urgente';
+                        atencao++;
+                    } else if (minutos >= 15) {
+                        classe = 'mesa-atencao';
+                        atencao++;
+                    } else {
+                        classe = 'mesa-ocupada';
+                    }
+                } else {
+                    livres++;
+                }
+                
+                const mesaHtml = `
+                    <div class="mesa ${classe}" 
+                         style="position: absolute; left: ${mesa.x}px; top: ${mesa.y}px;"
+                         onclick="abrirModalMesa(${mesa.id})">
+                        ${mesa.numero}
+                        ${tempo ? `<div class="tempo-mesa">${tempo}</div>` : ''}
+                    </div>
+                `;
+                container.innerHTML += mesaHtml;
+            });
+            
+            // Atualizar estatísticas
+            document.getElementById('mesas-livres').textContent = livres;
+            document.getElementById('mesas-ocupadas').textContent = ocupadas;
+            document.getElementById('mesas-atencao').textContent = atencao;
+        }
+
+        function adicionarMesa() {
+            const novoId = Math.max(...mesas.map(m => m.id)) + 1;
+            mesas.push({
+                id: novoId,
+                numero: novoId,
+                status: 'livre',
+                garcon: null,
+                tempoOcupacao: 0,
+                ultimaVisita: null,
+                x: 50 + (Math.random() * 400),
+                y: 50 + (Math.random() * 200)
+            });
+            carregarMesas();
+            atualizarSelects();
+        }
+
+        function abrirModalMesa(mesaId) {
+            mesaSelecionada = mesas.find(m => m.id === mesaId);
+            
+            document.getElementById('modal-mesa-numero').textContent = mesaSelecionada.numero;
+            document.getElementById('modal-mesa-status').textContent = mesaSelecionada.status;
+            
+            if (mesaSelecionada.status === 'ocupada') {
+                const minutos = Math.floor((Date.now() - mesaSelecionada.tempoOcupacao) / 60000);
+                document.getElementById('modal-mesa-tempo').textContent = `${minutos} minutos`;
+            } else {
+                document.getElementById('modal-mesa-tempo').textContent = '-';
+            }
+            
+            const garcon = garcons.find(g => g.id === mesaSelecionada.garcon);
+            document.getElementById('modal-mesa-garcon').textContent = garcon ? garcon.nome : 'Não definido';
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalMesa'));
+            modal.show();
+        }
+
+        function abrirMesa() {
+            if (mesaSelecionada) {
+                mesaSelecionada.status = 'ocupada';
+                mesaSelecionada.tempoOcupacao = Date.now();
+                carregarMesas();
+                bootstrap.Modal.getInstance(document.getElementById('modalMesa')).hide();
+            }
+        }
+
+        function fecharMesa() {
+            if (mesaSelecionada) {
+                mesaSelecionada.status = 'livre';
+                mesaSelecionada.tempoOcupacao = 0;
+                mesaSelecionada.garcon = null;
+                carregarMesas();
+                bootstrap.Modal.getInstance(document.getElementById('modalMesa')).hide();
+            }
+        }
+
+        function chamarGarcon() {
+            alert('Garçon chamado para a mesa ' + mesaSelecionada.numero + '!');
+            if (mesaSelecionada) {
+                mesaSelecionada.ultimaVisita = Date.now();
+            }
+        }
+
+        function atualizarTempoMesas() {
+            carregarMesas();
+        }
+
+        // Funções do Estoque
+        function carregarEstoque() {
+            const tbody = document.getElementById('tabela-estoque');
+            tbody.innerHTML = '';
+            
+            produtos.forEach(produto => {
+                let status = 'Normal';
+                let statusClass = 'text-success';
+                
+                if (produto.estoque <= produto.estoqueMin) {
+                    status = 'Estoque Baixo';
+                    statusClass = 'text-danger';
+                } else if (produto.estoque <= produto.estoqueMin * 2) {
+                    status = 'Atenção';
+                    statusClass = 'text-warning';
+                }
+                
+                const row = `
+                    <tr>
+                        <td>${produto.icone} ${produto.nome}</td>
+                        <td>R$ ${produto.preco.toFixed(2)}</td>
+                        <td>${produto.estoque}</td>
+                        <td>${produto.estoqueMin}</td>
+                        <td><span class="${statusClass}">${status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="adicionarEstoque(${produto.id})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="removerProduto(${produto.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function adicionarEstoque(produtoId) {
+            const quantidade = prompt('Quantidade a adicionar:');
+            if (quantidade && !isNaN(quantidade)) {
+                const produto = produtos.find(p => p.id === produtoId);
+                produto.estoque += parseInt(quantidade);
+                carregarEstoque();
+                carregarProdutosCaixa();
+            }
+        }
+
+        function removerProduto(produtoId) {
+            if (confirm('Tem certeza que deseja remover este produto?')) {
+                produtos = produtos.filter(p => p.id !== produtoId);
+                carregarEstoque();
+                carregarProdutosCaixa();
+                carregarListaProdutos();
+            }
+        }
+
+        // Funções dos Garçons
+        function carregarGarcons() {
+            const container = document.getElementById('lista-garcons');
+            container.innerHTML = '';
+            
+            garcons.forEach(garcon => {
+                const statusIcon = garcon.status === 'online' ? 'text-success' : 'text-danger';
+                const statusText = garcon.status === 'online' ? 'Online' : 'Offline';
+                
+                const garconHtml = `
+                    <div class="col-md-4 mb-3">
+                        <div class="card garcon-card">
+                            <div class="card-body text-center">
+                                <div style="font-size: 3rem;">${garcon.foto}</div>
+                                <h5>${garcon.nome}</h5>
+                                <p class="${statusIcon}">
+                                    <i class="fas fa-circle"></i> ${statusText}
+                                </p>
+                                <button class="btn btn-sm btn-primary" onclick="alterarStatusGarcon(${garcon.id})">
+                                    Alterar Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += garconHtml;
+            });
+        }
+
+        function cadastrarGarcon() {
+            const nome = prompt('Nome do garçon:');
+            if (nome) {
+                const novoId = Math.max(...garcons.map(g => g.id)) + 1;
+                garcons.push({
+                    id: novoId,
+                    nome: nome,
+                    status: 'online',
+                    foto: '👨‍🍳'
+                });
+                carregarGarcons();
+                atualizarSelects();
+            }
+        }
+
+        function alterarStatusGarcon(garconId) {
+            const garcon = garcons.find(g => g.id === garconId);
+            garcon.status = garcon.status === 'online' ? 'offline' : 'online';
+            carregarGarcons();
+        }
+
+        // Funções de Produtos
+        document.getElementById('form-produto').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const novoId = Math.max(...produtos.map(p => p.id)) + 1;
+            const novoProduto = {
+                id: novoId,
+                nome: document.getElementById('produto-nome').value,
+                preco: parseFloat(document.getElementById('produto-preco').value),
+                estoque: parseInt(document.getElementById('produto-estoque').value),
+                estoqueMin: parseInt(document.getElementById('produto-estoque-min').value),
+                icone: document.getElementById('produto-icone').value || '🍽️',
+                categoria: document.getElementById('produto-categoria').value
+            };
+            
+            produtos.push(novoProduto);
+            
+            // Limpar formulário
+            document.getElementById('form-produto').reset();
+            
+            // Atualizar listas
+            carregarListaProdutos();
+            carregarProdutosCaixa();
+            carregarEstoque();
+            
+            alert('Produto cadastrado com sucesso!');
+        });
+
+        function carregarListaProdutos() {
+            const container = document.getElementById('lista-produtos');
+            container.innerHTML = '';
+            
+            produtos.forEach(produto => {
+                const produtoHtml = `
+                    <div class="d-flex justify-content-between align-items-center p-2 border rounded mb-2">
+                        <div>
+                            <strong>${produto.icone} ${produto.nome}</strong><br>
+                            <small>R$ ${produto.preco.toFixed(2)} - Estoque: ${produto.estoque}</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removerProduto(${produto.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.innerHTML += produtoHtml;
+            });
+        }
+
+        // Funções de QR Code
+        function atualizarSelects() {
+            // Atualizar select de mesas no carrinho
+            const mesaSelect = document.getElementById('mesa-select');
+            mesaSelect.innerHTML = '<option value="">Selecionar Mesa</option>';
+            mesas.filter(m => m.status === 'livre').forEach(mesa => {
+                mesaSelect.innerHTML += `<option value="${mesa.id}">Mesa ${mesa.numero}</option>`;
+            });
+            
+            // Atualizar select de mesas para QR Code
+            const qrMesaSelect = document.getElementById('qr-mesa-select');
+            qrMesaSelect.innerHTML = '<option value="">Escolha uma mesa</option>';
+            mesas.forEach(mesa => {
+                qrMesaSelect.innerHTML += `<option value="${mesa.id}">Mesa ${mesa.numero}</option>`;
+            });
+            
+            // Atualizar select de garçons para QR Code
+            const qrGarconSelect = document.getElementById('qr-garcon-select');
+            qrGarconSelect.innerHTML = '<option value="">Escolha um garçon</option>';
+            garcons.filter(g => g.status === 'online').forEach(garcon => {
+                qrGarconSelect.innerHTML += `<option value="${garcon.id}">${garcon.nome}</option>`;
+            });
+        }
+
+        function gerarQRCode() {
+            const mesaId = document.getElementById('qr-mesa-select').value;
+            const garconId = document.getElementById('qr-garcon-select').value;
+            
+            if (!mesaId || !garconId) {
+                alert('Selecione uma mesa e um garçon');
+                return;
+            }
+            
+            const mesa = mesas.find(m => m.id == mesaId);
+            const garcon = garcons.find(g => g.id == garconId);
+            
+            // Atribuir garçon à mesa
+            mesa.garcon = garcon.id;
+            
+            // URL do aplicativo do cliente (simulado)
+            const appUrl = `https://admbeachapp.com/pedido?mesa=${mesa.numero}&garcon=${garcon.id}`;
+            
+            // Gerar QR Code
+            const qrContainer = document.getElementById('qr-display');
+            qrContainer.innerHTML = '<canvas id="qr-canvas"></canvas>';
+            
+            QRCode.toCanvas(document.getElementById('qr-canvas'), appUrl, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            });
+            
+            // Mostrar informações
+            document.getElementById('qr-mesa-info').textContent = mesa.numero;
+            document.getElementById('qr-garcon-info').textContent = garcon.nome;
+            document.getElementById('qr-url-info').textContent = appUrl;
+            document.getElementById('qr-info').style.display = 'block';
+        }
+
+        function imprimirQR() {
+            const canvas = document.getElementById('qr-canvas');
+            const win = window.open();
+            win.document.write(`
+                <html>
+                <head><title>QR Code - Mesa ${document.getElementById('qr-mesa-info').textContent}</title></head>
+                <body style="text-align: center; font-family: Arial;">
+                    <h2>AdmBeachApp</h2>
+                    <h3>Mesa ${document.getElementById('qr-mesa-info').textContent}</h3>
+                    <p>Garçon: ${document.getElementById('qr-garcon-info').textContent}</p>
+                    <img src="${canvas.toDataURL()}" />
+                    <p>Escaneie para fazer seu pedido!</p>
+                </body>
+                </html>
+            `);
+            win.print();
+        }
+    </script>
+</body>
+</html>
+

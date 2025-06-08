@@ -1,0 +1,133 @@
+@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>AdmBeachApp - Sistema de Gestão para Quiosques</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="jumbotron bg-primary text-white p-4 rounded mb-4">
+                <h1 class="display-4">🏖️ Bem-vindo ao AdmBeachApp!</h1>
+                <p class="lead">Sistema completo de gestão para quiosques de praia</p>
+                <hr class="my-4">
+                <p>Gerencie vendas, estoque e operações do seu quiosque de forma simples e eficiente.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Card Frente de Caixa -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-success mb-3">💰</div>
+                    <h5 class="card-title">Frente de Caixa</h5>
+                    <p class="card-text">Sistema completo de vendas com carrinho, cálculo automático e múltiplas formas de pagamento.</p>
+                    <button class="btn btn-success btn-lg" @onclick="AbrirFrenteCaixa">Abrir Caixa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Login -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-primary mb-3">👤</div>
+                    <h5 class="card-title">Autenticação</h5>
+                    <p class="card-text">Sistema de login seguro para controle de acesso ao sistema.</p>
+                    <button class="btn btn-primary" @onclick="AbrirLogin">Fazer Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Relatórios -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-info mb-3">📊</div>
+                    <h5 class="card-title">Relatórios</h5>
+                    <p class="card-text">Acompanhe suas vendas e performance do quiosque.</p>
+                    <button class="btn btn-info" disabled>Em Breve</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Estoque -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-warning mb-3">📦</div>
+                    <h5 class="card-title">Gestão de Estoque</h5>
+                    <p class="card-text">Controle completo dos produtos e níveis de estoque.</p>
+                    <button class="btn btn-warning" disabled>Em Breve</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Configurações -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-secondary mb-3">⚙️</div>
+                    <h5 class="card-title">Configurações</h5>
+                    <p class="card-text">Personalize o sistema de acordo com suas necessidades.</p>
+                    <button class="btn btn-secondary" disabled>Em Breve</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Suporte -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-1 text-danger mb-3">🆘</div>
+                    <h5 class="card-title">Suporte</h5>
+                    <p class="card-text">Precisa de ajuda? Entre em contato conosco.</p>
+                    <a href="mailto:juliocamposmachado@gmail.com" class="btn btn-danger">Contatar Suporte</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="text-center text-muted">
+                <hr>
+                <p>© 2024 Like Look Solutions - AdmBeachApp</p>
+                <p>Desenvolvido por <strong>Julio Campos Machado</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .jumbotron {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out;
+        border: none;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .display-1 {
+        font-size: 4rem;
+    }
+</style>
+
+@code {
+    private void AbrirFrenteCaixa()
+    {
+        Navigation.NavigateTo("/frente-caixa");
+    }
+
+    private void AbrirLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

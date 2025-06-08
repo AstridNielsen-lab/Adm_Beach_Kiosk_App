@@ -24,9 +24,14 @@ namespace AdmBeachApp
             // Adicionando Blazor WebView
             builder.Services.AddMauiBlazorWebView();
 
-            // Configuração do Serviço da API
+            // Configuração do Serviço da API (opcional)
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5209/") });
             builder.Services.AddScoped<ApiService>();
+
+            // Adicionar logging para debug
+#if DEBUG
+            builder.Services.AddLogging();
+#endif
 
             return builder.Build();
         }
